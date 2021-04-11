@@ -66,8 +66,6 @@ const std::unordered_map<std::string, ItemParseAttributes_t> ItemParseAttributes
 	{"transformequipto", ITEM_PARSE_TRANSFORMEQUIPTO},
 	{"transformdeequipto", ITEM_PARSE_TRANSFORMDEEQUIPTO},
 	{"duration", ITEM_PARSE_DURATION},
-	{"durationmin", ITEM_PARSE_DURATION},
-	{"durationmax", ITEM_PARSE_DURATIONMAX},
 	{"showduration", ITEM_PARSE_SHOWDURATION},
 	{"charges", ITEM_PARSE_CHARGES},
 	{"showcharges", ITEM_PARSE_SHOWCHARGES},
@@ -581,8 +579,18 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint16_t id)
 		}
 
 		pugi::xml_attribute valueAttribute = attributeNode.attribute("value");
+		pugi::xml_attribute maxValueAttr;
+
 		if (!valueAttribute) {
-			continue;
+			valueAttribute = attributeNode.attribute("minValue");
+			if (!valueAttribute) {
+				valueAttribute = attributeNode.attribute("maxValue");
+			} else {
+				maxValueAttr = attributeNode.attribute("maxValue");
+			}
+			if (!valueAttribute && !maxValueAttr) {
+				continue;
+			}
 		}
 
 		std::string tmpStrValue = asLowerCaseString(keyAttribute.as_string());
@@ -826,11 +834,9 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint16_t id)
 
 				case ITEM_PARSE_DURATION: {
 					it.decayTime = pugi::cast<uint32_t>(valueAttribute.value());
-					break;
-				}
-
-				case ITEM_PARSE_DURATIONMAX: {
-					it.decayTimeMax = pugi::cast<uint32_t>(valueAttribute.value());
+					if (maxValueAttr) {
+						it.decayTimeMax = pugi::cast<uint32_t>(maxValueAttr.value());
+					}
 					break;
 				}
 
