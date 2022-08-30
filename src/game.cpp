@@ -48,6 +48,8 @@ extern MoveEvents* g_moveEvents;
 extern Weapons* g_weapons;
 extern Scripts* g_scripts;
 
+extern Game g_game;
+
 Game::Game()
 {
 	offlineTrainingWindow.defaultEnterButton = 1;

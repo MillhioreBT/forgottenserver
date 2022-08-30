@@ -7,14 +7,9 @@
 #include "configmanager.h"
 
 #include "game.h"
+#include "luaapi.h"
 #include "monster.h"
 #include "pugicast.h"
-
-#if __has_include("luajit/lua.hpp")
-#include <luajit/lua.hpp>
-#else
-#include <lua.hpp>
-#endif
 
 #if LUA_VERSION_NUM >= 502
 #undef lua_strlen
@@ -90,9 +85,9 @@ ExperienceStages loadLuaStages(lua_State* L)
 	lua_pushnil(L);
 	while (lua_next(L, -2) != 0) {
 		const auto tableIndex = lua_gettop(L);
-		auto minLevel = LuaScriptInterface::getField<uint32_t>(L, tableIndex, "minlevel");
-		auto maxLevel = LuaScriptInterface::getField<uint32_t>(L, tableIndex, "maxlevel");
-		auto multiplier = LuaScriptInterface::getField<float>(L, tableIndex, "multiplier");
+		auto minLevel = tfs::lua::getField<uint32_t>(L, tableIndex, "minlevel");
+		auto maxLevel = tfs::lua::getField<uint32_t>(L, tableIndex, "maxlevel");
+		auto multiplier = tfs::lua::getField<float>(L, tableIndex, "multiplier");
 		stages.emplace_back(minLevel, maxLevel, multiplier);
 		lua_pop(L, 4);
 	}

@@ -7,6 +7,7 @@
 
 #include "configmanager.h"
 #include "game.h"
+#include "luaenv.h"
 #include "monster.h"
 #include "pugicast.h"
 #include "scheduler.h"
@@ -560,12 +561,12 @@ std::string ScriptEvent::getScriptEventName() const { return "onRaid"; }
 bool ScriptEvent::executeEvent()
 {
 	// onRaid()
-	if (!scriptInterface->reserveScriptEnv()) {
+	if (!tfs::lua::reserveScriptEnv()) {
 		std::cout << "[Error - ScriptEvent::onRaid] Call stack overflow" << std::endl;
 		return false;
 	}
 
-	ScriptEnvironment* env = scriptInterface->getScriptEnv();
+	tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
 	env->setScriptId(scriptId, scriptInterface);
 
 	scriptInterface->pushFunction(scriptId);

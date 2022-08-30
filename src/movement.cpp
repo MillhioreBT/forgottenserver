@@ -7,6 +7,9 @@
 
 #include "combat.h"
 #include "game.h"
+#include "luaenv.h"
+#include "luaerror.h"
+#include "luameta.h"
 #include "pugicast.h"
 
 extern Game g_game;
@@ -679,7 +682,7 @@ uint32_t MoveEvent::StepInField(Creature* creature, Item* item, const Position&)
 		return 1;
 	}
 
-	return LUA_ERROR_ITEM_NOT_FOUND;
+	return tfs::lua::LUA_ERROR_ITEM_NOT_FOUND;
 }
 
 uint32_t MoveEvent::StepOutField(Creature*, Item*, const Position&) { return 1; }
@@ -695,7 +698,7 @@ uint32_t MoveEvent::AddItemField(Item* item, Item*, const Position&)
 		}
 		return 1;
 	}
-	return LUA_ERROR_ITEM_NOT_FOUND;
+	return tfs::lua::LUA_ERROR_ITEM_NOT_FOUND;
 }
 
 uint32_t MoveEvent::RemoveItemField(Item*, Item*, const Position&) { return 1; }
@@ -972,22 +975,22 @@ bool MoveEvent::executeStep(Creature* creature, Item* item, const Position& pos)
 {
 	// onStepIn(creature, item, pos, fromPosition)
 	// onStepOut(creature, item, pos, fromPosition)
-	if (!scriptInterface->reserveScriptEnv()) {
+	if (!tfs::lua::reserveScriptEnv()) {
 		std::cout << "[Error - MoveEvent::executeStep] Call stack overflow" << std::endl;
 		return false;
 	}
 
-	ScriptEnvironment* env = scriptInterface->getScriptEnv();
+	tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
 	env->setScriptId(scriptId, scriptInterface);
 
 	lua_State* L = scriptInterface->getLuaState();
 
 	scriptInterface->pushFunction(scriptId);
-	LuaScriptInterface::pushUserdata<Creature>(L, creature);
-	LuaScriptInterface::setCreatureMetatable(L, -1, creature);
-	LuaScriptInterface::pushThing(L, item);
-	LuaScriptInterface::pushPosition(L, pos);
-	LuaScriptInterface::pushPosition(L, creature->getLastPosition());
+	tfs::lua::pushUserdata<Creature>(L, creature);
+	tfs::lua::setCreatureMetatable(L, -1, creature);
+	tfs::lua::pushThing(L, item);
+	tfs::lua::pushPosition(L, pos);
+	tfs::lua::pushPosition(L, creature->getLastPosition());
 
 	return scriptInterface->callFunction(4);
 }
@@ -1008,22 +1011,22 @@ bool MoveEvent::executeEquip(Player* player, Item* item, slots_t slot, bool isCh
 {
 	// onEquip(player, item, slot, isCheck)
 	// onDeEquip(player, item, slot, isCheck)
-	if (!scriptInterface->reserveScriptEnv()) {
+	if (!tfs::lua::reserveScriptEnv()) {
 		std::cout << "[Error - MoveEvent::executeEquip] Call stack overflow" << std::endl;
 		return false;
 	}
 
-	ScriptEnvironment* env = scriptInterface->getScriptEnv();
+	tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
 	env->setScriptId(scriptId, scriptInterface);
 
 	lua_State* L = scriptInterface->getLuaState();
 
 	scriptInterface->pushFunction(scriptId);
-	LuaScriptInterface::pushUserdata<Player>(L, player);
-	LuaScriptInterface::setMetatable(L, -1, "Player");
-	LuaScriptInterface::pushThing(L, item);
+	tfs::lua::pushUserdata<Player>(L, player);
+	tfs::lua::setMetatable(L, -1, "Player");
+	tfs::lua::pushThing(L, item);
 	lua_pushnumber(L, slot);
-	LuaScriptInterface::pushBoolean(L, isCheck);
+	tfs::lua::pushBoolean(L, isCheck);
 
 	return scriptInterface->callFunction(4);
 }
@@ -1040,20 +1043,20 @@ bool MoveEvent::executeAddRemItem(Item* item, Item* tileItem, const Position& po
 {
 	// onaddItem(moveitem, tileitem, pos)
 	// onRemoveItem(moveitem, tileitem, pos)
-	if (!scriptInterface->reserveScriptEnv()) {
+	if (!tfs::lua::reserveScriptEnv()) {
 		std::cout << "[Error - MoveEvent::executeAddRemItem] Call stack overflow" << std::endl;
 		return false;
 	}
 
-	ScriptEnvironment* env = scriptInterface->getScriptEnv();
+	tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
 	env->setScriptId(scriptId, scriptInterface);
 
 	lua_State* L = scriptInterface->getLuaState();
 
 	scriptInterface->pushFunction(scriptId);
-	LuaScriptInterface::pushThing(L, item);
-	LuaScriptInterface::pushThing(L, tileItem);
-	LuaScriptInterface::pushPosition(L, pos);
+	tfs::lua::pushThing(L, item);
+	tfs::lua::pushThing(L, tileItem);
+	tfs::lua::pushPosition(L, pos);
 
 	return scriptInterface->callFunction(3);
 }

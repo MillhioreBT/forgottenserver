@@ -8,6 +8,8 @@
 #include "combat.h"
 #include "configmanager.h"
 #include "game.h"
+#include "luaenv.h"
+#include "luameta.h"
 #include "luavariant.h"
 #include "pugicast.h"
 
@@ -489,20 +491,20 @@ int32_t Weapon::getHealthCost(const Player* player) const
 bool Weapon::executeUseWeapon(Player* player, const LuaVariant& var) const
 {
 	// onUseWeapon(player, var)
-	if (!scriptInterface->reserveScriptEnv()) {
+	if (!tfs::lua::reserveScriptEnv()) {
 		std::cout << "[Error - Weapon::executeUseWeapon] Call stack overflow" << std::endl;
 		return false;
 	}
 
-	ScriptEnvironment* env = scriptInterface->getScriptEnv();
+	tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
 	env->setScriptId(scriptId, scriptInterface);
 
 	lua_State* L = scriptInterface->getLuaState();
 
 	scriptInterface->pushFunction(scriptId);
-	LuaScriptInterface::pushUserdata<Player>(L, player);
-	LuaScriptInterface::setMetatable(L, -1, "Player");
-	scriptInterface->pushVariant(L, var);
+	tfs::lua::pushUserdata<Player>(L, player);
+	tfs::lua::setMetatable(L, -1, "Player");
+	tfs::lua::pushVariant(L, var);
 
 	return scriptInterface->callFunction(2);
 }
