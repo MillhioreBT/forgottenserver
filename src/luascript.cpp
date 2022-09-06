@@ -12,12 +12,9 @@
 #include "configmanager.h"
 #include "databasemanager.h"
 #include "databasetasks.h"
-#include "depotchest.h"
 #include "events.h"
 #include "game.h"
-#include "globalevent.h"
 #include "housetile.h"
-#include "inbox.h"
 #include "iologindata.h"
 #include "iomapserialize.h"
 #include "iomarket.h"
@@ -28,7 +25,6 @@
 #include "luavariant.h"
 #include "modules/luaregister.h"
 #include "monster.h"
-#include "movement.h"
 #include "npc.h"
 #include "outfit.h"
 #include "party.h"
@@ -39,7 +35,6 @@
 #include "script.h"
 #include "spectators.h"
 #include "spells.h"
-#include "storeinbox.h"
 #include "teleport.h"
 
 #include <boost/range/adaptor/reversed.hpp>
@@ -52,15 +47,10 @@ extern Vocations g_vocations;
 extern Spells* g_spells;
 extern Events* g_events;
 extern Actions* g_actions;
-extern TalkActions* g_talkActions;
-extern CreatureEvents* g_creatureEvents;
-extern MoveEvents* g_moveEvents;
-extern GlobalEvents* g_globalEvents;
+
 extern Scripts* g_scripts;
 
 extern LuaEnvironment* g_luaEnvironment;
-
-static bool isNumber(lua_State* L, int32_t arg) { return lua_type(L, arg) == LUA_TNUMBER; }
 
 LuaScriptInterface::LuaScriptInterface(std::string interfaceName) : interfaceName(std::move(interfaceName))
 {
@@ -576,7 +566,7 @@ static bool getArea(lua_State* L, std::vector<uint32_t>& vec, uint32_t& rows)
 
 		lua_pushnil(L);
 		while (lua_next(L, -2) != 0) {
-			if (!isNumber(L, -1)) {
+			if (!tfs::lua::isNumber(L, -1)) {
 				return false;
 			}
 			vec.push_back(tfs::lua::getNumber<uint32_t>(L, -1));
@@ -633,7 +623,7 @@ int luaDoAreaCombat(lua_State* L)
 	// doAreaCombat(cid, type, pos, area, min, max, effect[, origin = ORIGIN_SPELL[, blockArmor = false[, blockShield =
 	// false[, ignoreResistances = false]]]])
 	Creature* creature = tfs::lua::getCreature(L, 1);
-	if (!creature && (!isNumber(L, 1) || tfs::lua::getNumber<uint32_t>(L, 1) != 0)) {
+	if (!creature && (!tfs::lua::isNumber(L, 1) || tfs::lua::getNumber<uint32_t>(L, 1) != 0)) {
 		reportErrorFunc(L, tfs::lua::getErrorDesc(tfs::lua::LUA_ERROR_CREATURE_NOT_FOUND));
 		tfs::lua::pushBoolean(L, false);
 		return 1;
@@ -670,7 +660,7 @@ int luaDoTargetCombat(lua_State* L)
 	// doTargetCombat(cid, target, type, min, max, effect[, origin = ORIGIN_SPELL[, blockArmor = false[, blockShield =
 	// false[, ignoreResistances = false]]]])
 	Creature* creature = tfs::lua::getCreature(L, 1);
-	if (!creature && (!isNumber(L, 1) || tfs::lua::getNumber<uint32_t>(L, 1) != 0)) {
+	if (!creature && (!tfs::lua::isNumber(L, 1) || tfs::lua::getNumber<uint32_t>(L, 1) != 0)) {
 		reportErrorFunc(L, tfs::lua::getErrorDesc(tfs::lua::LUA_ERROR_CREATURE_NOT_FOUND));
 		tfs::lua::pushBoolean(L, false);
 		return 1;
@@ -852,7 +842,7 @@ int luaAddEvent(lua_State* L)
 		return 1;
 	}
 
-	if (!isNumber(L, 2)) {
+	if (!tfs::lua::isNumber(L, 2)) {
 		reportErrorFunc(L, "delay parameter should be a number.");
 		tfs::lua::pushBoolean(L, false);
 		return 1;
@@ -1293,14 +1283,6 @@ int luaResultFree(lua_State* L)
 	return 1;
 }
 
-// Userdata
-int luaUserdataCompare(lua_State* L)
-{
-	// userdataA == userdataB
-	tfs::lua::pushBoolean(L, tfs::lua::getUserdata<void>(L, 1) == tfs::lua::getUserdata<void>(L, 2));
-	return 1;
-}
-
 // _G
 int luaIsType(lua_State* L)
 {
@@ -1383,7 +1365,8 @@ int luaGameGetSpectators(lua_State* L)
 	int32_t maxRangeY = tfs::lua::getNumber<int32_t>(L, 7, 0);
 
 	SpectatorVec spectators;
-	g_game->map.getSpectators(spectators, position, multifloor, onlyPlayers, minRangeX, maxRangeX, minRangeY, maxRangeY);
+	g_game->map.getSpectators(spectators, position, multifloor, onlyPlayers, minRangeX, maxRangeX, minRangeY,
+	                          maxRangeY);
 
 	lua_createtable(L, spectators.size(), 0);
 
@@ -1543,7 +1526,7 @@ int luaGameGetMountIdByLookType(lua_State* L)
 {
 	// Game.getMountIdByLookType(lookType)
 	Mount* mount = nullptr;
-	if (isNumber(L, 1)) {
+	if (tfs::lua::isNumber(L, 1)) {
 		mount = g_game->mounts.getMountByClientID(tfs::lua::getNumber<uint16_t>(L, 1));
 	}
 
@@ -1588,7 +1571,7 @@ int luaGameGetHouses(lua_State* L)
 int luaGameGetOutfits(lua_State* L)
 {
 	// Game.getOutfits(playerSex)
-	if (!isNumber(L, 1)) {
+	if (!tfs::lua::isNumber(L, 1)) {
 		lua_pushnil(L);
 		return 1;
 	}
@@ -1678,7 +1661,7 @@ int luaGameCreateItem(lua_State* L)
 	// Game.createItem(itemId[, count[, position]])
 	uint16_t count = tfs::lua::getNumber<uint16_t>(L, 2, 1);
 	uint16_t id;
-	if (isNumber(L, 1)) {
+	if (tfs::lua::isNumber(L, 1)) {
 		id = tfs::lua::getNumber<uint16_t>(L, 1);
 	} else {
 		id = Item::items.getItemIdByName(tfs::lua::getString(L, 1));
@@ -1724,7 +1707,7 @@ int luaGameCreateContainer(lua_State* L)
 	// Game.createContainer(itemId, size[, position])
 	uint16_t size = tfs::lua::getNumber<uint16_t>(L, 2);
 	uint16_t id;
-	if (isNumber(L, 1)) {
+	if (tfs::lua::isNumber(L, 1)) {
 		id = tfs::lua::getNumber<uint16_t>(L, 1);
 	} else {
 		id = Item::items.getItemIdByName(tfs::lua::getString(L, 1));
@@ -1969,7 +1952,7 @@ int luaVariantCreate(lua_State* L)
 		}
 	} else if (lua_istable(L, 2)) {
 		variant.setPosition(tfs::lua::getPosition(L, 2));
-	} else if (isNumber(L, 2)) {
+	} else if (tfs::lua::isNumber(L, 2)) {
 		variant.setNumber(tfs::lua::getNumber<uint32_t>(L, 2));
 	} else if (lua_isstring(L, 2)) {
 		variant.setString(tfs::lua::getString(L, 2));
@@ -2152,699 +2135,6 @@ int luaPositionSendDistanceEffect(lua_State* L)
 	}
 
 	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-// Tile
-int luaTileCreate(lua_State* L)
-{
-	// Tile(x, y, z)
-	// Tile(position)
-	Tile* tile;
-	if (lua_istable(L, 2)) {
-		tile = g_game->map.getTile(tfs::lua::getPosition(L, 2));
-	} else {
-		uint8_t z = tfs::lua::getNumber<uint8_t>(L, 4);
-		uint16_t y = tfs::lua::getNumber<uint16_t>(L, 3);
-		uint16_t x = tfs::lua::getNumber<uint16_t>(L, 2);
-		tile = g_game->map.getTile(x, y, z);
-	}
-
-	if (tile) {
-		tfs::lua::pushUserdata<Tile>(L, tile);
-		tfs::lua::setMetatable(L, -1, "Tile");
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTileRemove(lua_State* L)
-{
-	// tile:remove()
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	if (g_game->isTileInCleanList(tile)) {
-		g_game->removeTileToClean(tile);
-	}
-
-	g_game->map.removeTile(tile->getPosition());
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaTileGetPosition(lua_State* L)
-{
-	// tile:getPosition()
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (tile) {
-		tfs::lua::pushPosition(L, tile->getPosition());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTileGetGround(lua_State* L)
-{
-	// tile:getGround()
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (tile && tile->getGround()) {
-		tfs::lua::pushUserdata<Item>(L, tile->getGround());
-		tfs::lua::setItemMetatable(L, -1, tile->getGround());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTileGetThing(lua_State* L)
-{
-	// tile:getThing(index)
-	int32_t index = tfs::lua::getNumber<int32_t>(L, 2);
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Thing* thing = tile->getThing(index);
-	if (!thing) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	if (Creature* creature = thing->getCreature()) {
-		tfs::lua::pushUserdata<Creature>(L, creature);
-		tfs::lua::setCreatureMetatable(L, -1, creature);
-	} else if (Item* item = thing->getItem()) {
-		tfs::lua::pushUserdata<Item>(L, item);
-		tfs::lua::setItemMetatable(L, -1, item);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTileGetThingCount(lua_State* L)
-{
-	// tile:getThingCount()
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (tile) {
-		lua_pushnumber(L, tile->getThingCount());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTileGetTopVisibleThing(lua_State* L)
-{
-	// tile:getTopVisibleThing(creature)
-	Creature* creature = tfs::lua::getCreature(L, 2);
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Thing* thing = tile->getTopVisibleThing(creature);
-	if (!thing) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	if (Creature* visibleCreature = thing->getCreature()) {
-		tfs::lua::pushUserdata<Creature>(L, visibleCreature);
-		tfs::lua::setCreatureMetatable(L, -1, visibleCreature);
-	} else if (Item* visibleItem = thing->getItem()) {
-		tfs::lua::pushUserdata<Item>(L, visibleItem);
-		tfs::lua::setItemMetatable(L, -1, visibleItem);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTileGetTopTopItem(lua_State* L)
-{
-	// tile:getTopTopItem()
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Item* item = tile->getTopTopItem();
-	if (item) {
-		tfs::lua::pushUserdata<Item>(L, item);
-		tfs::lua::setItemMetatable(L, -1, item);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTileGetTopDownItem(lua_State* L)
-{
-	// tile:getTopDownItem()
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Item* item = tile->getTopDownItem();
-	if (item) {
-		tfs::lua::pushUserdata<Item>(L, item);
-		tfs::lua::setItemMetatable(L, -1, item);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTileGetFieldItem(lua_State* L)
-{
-	// tile:getFieldItem()
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Item* item = tile->getFieldItem();
-	if (item) {
-		tfs::lua::pushUserdata<Item>(L, item);
-		tfs::lua::setItemMetatable(L, -1, item);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTileGetItemById(lua_State* L)
-{
-	// tile:getItemById(itemId[, subType = -1])
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	uint16_t itemId;
-	if (isNumber(L, 2)) {
-		itemId = tfs::lua::getNumber<uint16_t>(L, 2);
-	} else {
-		itemId = Item::items.getItemIdByName(tfs::lua::getString(L, 2));
-		if (itemId == 0) {
-			lua_pushnil(L);
-			return 1;
-		}
-	}
-	int32_t subType = tfs::lua::getNumber<int32_t>(L, 3, -1);
-
-	Item* item = g_game->findItemOfType(tile, itemId, false, subType);
-	if (item) {
-		tfs::lua::pushUserdata<Item>(L, item);
-		tfs::lua::setItemMetatable(L, -1, item);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTileGetItemByType(lua_State* L)
-{
-	// tile:getItemByType(itemType)
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	bool found;
-
-	ItemTypes_t itemType = tfs::lua::getNumber<ItemTypes_t>(L, 2);
-	switch (itemType) {
-		case ITEM_TYPE_TELEPORT:
-			found = tile->hasFlag(TILESTATE_TELEPORT);
-			break;
-		case ITEM_TYPE_MAGICFIELD:
-			found = tile->hasFlag(TILESTATE_MAGICFIELD);
-			break;
-		case ITEM_TYPE_MAILBOX:
-			found = tile->hasFlag(TILESTATE_MAILBOX);
-			break;
-		case ITEM_TYPE_TRASHHOLDER:
-			found = tile->hasFlag(TILESTATE_TRASHHOLDER);
-			break;
-		case ITEM_TYPE_BED:
-			found = tile->hasFlag(TILESTATE_BED);
-			break;
-		case ITEM_TYPE_DEPOT:
-			found = tile->hasFlag(TILESTATE_DEPOT);
-			break;
-		default:
-			found = true;
-			break;
-	}
-
-	if (!found) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	if (Item* item = tile->getGround()) {
-		const ItemType& it = Item::items[item->getID()];
-		if (it.type == itemType) {
-			tfs::lua::pushUserdata<Item>(L, item);
-			tfs::lua::setItemMetatable(L, -1, item);
-			return 1;
-		}
-	}
-
-	if (const TileItemVector* items = tile->getItemList()) {
-		for (Item* item : *items) {
-			const ItemType& it = Item::items[item->getID()];
-			if (it.type == itemType) {
-				tfs::lua::pushUserdata<Item>(L, item);
-				tfs::lua::setItemMetatable(L, -1, item);
-				return 1;
-			}
-		}
-	}
-
-	lua_pushnil(L);
-	return 1;
-}
-
-int luaTileGetItemByTopOrder(lua_State* L)
-{
-	// tile:getItemByTopOrder(topOrder)
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	int32_t topOrder = tfs::lua::getNumber<int32_t>(L, 2);
-
-	Item* item = tile->getItemByTopOrder(topOrder);
-	if (!item) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	tfs::lua::pushUserdata<Item>(L, item);
-	tfs::lua::setItemMetatable(L, -1, item);
-	return 1;
-}
-
-int luaTileGetItemCountById(lua_State* L)
-{
-	// tile:getItemCountById(itemId[, subType = -1])
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	int32_t subType = tfs::lua::getNumber<int32_t>(L, 3, -1);
-
-	uint16_t itemId;
-	if (isNumber(L, 2)) {
-		itemId = tfs::lua::getNumber<uint16_t>(L, 2);
-	} else {
-		itemId = Item::items.getItemIdByName(tfs::lua::getString(L, 2));
-		if (itemId == 0) {
-			lua_pushnil(L);
-			return 1;
-		}
-	}
-
-	lua_pushnumber(L, tile->getItemTypeCount(itemId, subType));
-	return 1;
-}
-
-int luaTileGetBottomCreature(lua_State* L)
-{
-	// tile:getBottomCreature()
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	const Creature* creature = tile->getBottomCreature();
-	if (!creature) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	tfs::lua::pushUserdata<const Creature>(L, creature);
-	tfs::lua::setCreatureMetatable(L, -1, creature);
-	return 1;
-}
-
-int luaTileGetTopCreature(lua_State* L)
-{
-	// tile:getTopCreature()
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Creature* creature = tile->getTopCreature();
-	if (!creature) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	tfs::lua::pushUserdata<Creature>(L, creature);
-	tfs::lua::setCreatureMetatable(L, -1, creature);
-	return 1;
-}
-
-int luaTileGetBottomVisibleCreature(lua_State* L)
-{
-	// tile:getBottomVisibleCreature(creature)
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Creature* creature = tfs::lua::getCreature(L, 2);
-	if (!creature) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	const Creature* visibleCreature = tile->getBottomVisibleCreature(creature);
-	if (visibleCreature) {
-		tfs::lua::pushUserdata<const Creature>(L, visibleCreature);
-		tfs::lua::setCreatureMetatable(L, -1, visibleCreature);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTileGetTopVisibleCreature(lua_State* L)
-{
-	// tile:getTopVisibleCreature(creature)
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Creature* creature = tfs::lua::getCreature(L, 2);
-	if (!creature) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Creature* visibleCreature = tile->getTopVisibleCreature(creature);
-	if (visibleCreature) {
-		tfs::lua::pushUserdata<Creature>(L, visibleCreature);
-		tfs::lua::setCreatureMetatable(L, -1, visibleCreature);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTileGetItems(lua_State* L)
-{
-	// tile:getItems()
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	TileItemVector* itemVector = tile->getItemList();
-	if (!itemVector) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	lua_createtable(L, itemVector->size(), 0);
-
-	int index = 0;
-	for (Item* item : *itemVector) {
-		tfs::lua::pushUserdata<Item>(L, item);
-		tfs::lua::setItemMetatable(L, -1, item);
-		lua_rawseti(L, -2, ++index);
-	}
-	return 1;
-}
-
-int luaTileGetItemCount(lua_State* L)
-{
-	// tile:getItemCount()
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	lua_pushnumber(L, tile->getItemCount());
-	return 1;
-}
-
-int luaTileGetDownItemCount(lua_State* L)
-{
-	// tile:getDownItemCount()
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (tile) {
-		lua_pushnumber(L, tile->getDownItemCount());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTileGetTopItemCount(lua_State* L)
-{
-	// tile:getTopItemCount()
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	lua_pushnumber(L, tile->getTopItemCount());
-	return 1;
-}
-
-int luaTileGetCreatures(lua_State* L)
-{
-	// tile:getCreatures()
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	CreatureVector* creatureVector = tile->getCreatures();
-	if (!creatureVector) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	lua_createtable(L, creatureVector->size(), 0);
-
-	int index = 0;
-	for (Creature* creature : *creatureVector) {
-		tfs::lua::pushUserdata<Creature>(L, creature);
-		tfs::lua::setCreatureMetatable(L, -1, creature);
-		lua_rawseti(L, -2, ++index);
-	}
-	return 1;
-}
-
-int luaTileGetCreatureCount(lua_State* L)
-{
-	// tile:getCreatureCount()
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	lua_pushnumber(L, tile->getCreatureCount());
-	return 1;
-}
-
-int luaTileHasProperty(lua_State* L)
-{
-	// tile:hasProperty(property[, item])
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Item* item;
-	if (lua_gettop(L) >= 3) {
-		item = tfs::lua::getUserdata<Item>(L, 3);
-	} else {
-		item = nullptr;
-	}
-
-	ITEMPROPERTY property = tfs::lua::getNumber<ITEMPROPERTY>(L, 2);
-	if (item) {
-		tfs::lua::pushBoolean(L, tile->hasProperty(item, property));
-	} else {
-		tfs::lua::pushBoolean(L, tile->hasProperty(property));
-	}
-	return 1;
-}
-
-int luaTileGetThingIndex(lua_State* L)
-{
-	// tile:getThingIndex(thing)
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Thing* thing = tfs::lua::getThing(L, 2);
-	if (thing) {
-		lua_pushnumber(L, tile->getThingIndex(thing));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTileHasFlag(lua_State* L)
-{
-	// tile:hasFlag(flag)
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (tile) {
-		tileflags_t flag = tfs::lua::getNumber<tileflags_t>(L, 2);
-		tfs::lua::pushBoolean(L, tile->hasFlag(flag));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTileQueryAdd(lua_State* L)
-{
-	// tile:queryAdd(thing[, flags])
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Thing* thing = tfs::lua::getThing(L, 2);
-	if (thing) {
-		uint32_t flags = tfs::lua::getNumber<uint32_t>(L, 3, 0);
-		lua_pushnumber(L, tile->queryAdd(0, *thing, 1, flags));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTileAddItem(lua_State* L)
-{
-	// tile:addItem(itemId[, count/subType = 1[, flags = 0]])
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	uint16_t itemId;
-	if (isNumber(L, 2)) {
-		itemId = tfs::lua::getNumber<uint16_t>(L, 2);
-	} else {
-		itemId = Item::items.getItemIdByName(tfs::lua::getString(L, 2));
-		if (itemId == 0) {
-			lua_pushnil(L);
-			return 1;
-		}
-	}
-
-	uint32_t subType = tfs::lua::getNumber<uint32_t>(L, 3, 1);
-
-	Item* item = Item::CreateItem(itemId, std::min<uint32_t>(subType, 100));
-	if (!item) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	uint32_t flags = tfs::lua::getNumber<uint32_t>(L, 4, 0);
-
-	ReturnValue ret = g_game->internalAddItem(tile, item, INDEX_WHEREEVER, flags);
-	if (ret == RETURNVALUE_NOERROR) {
-		tfs::lua::pushUserdata<Item>(L, item);
-		tfs::lua::setItemMetatable(L, -1, item);
-	} else {
-		delete item;
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTileAddItemEx(lua_State* L)
-{
-	// tile:addItemEx(item[, flags = 0])
-	Item* item = tfs::lua::getUserdata<Item>(L, 2);
-	if (!item) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	if (item->getParent() != VirtualCylinder::virtualCylinder) {
-		reportErrorFunc(L, "Item already has a parent");
-		lua_pushnil(L);
-		return 1;
-	}
-
-	uint32_t flags = tfs::lua::getNumber<uint32_t>(L, 3, 0);
-	ReturnValue ret = g_game->internalAddItem(tile, item, INDEX_WHEREEVER, flags);
-	if (ret == RETURNVALUE_NOERROR) {
-		tfs::lua::ScriptEnvironment::removeTempItem(item);
-	}
-	lua_pushnumber(L, ret);
-	return 1;
-}
-
-int luaTileGetHouse(lua_State* L)
-{
-	// tile:getHouse()
-	Tile* tile = tfs::lua::getUserdata<Tile>(L, 1);
-	if (!tile) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	if (HouseTile* houseTile = dynamic_cast<HouseTile*>(tile)) {
-		tfs::lua::pushUserdata<House>(L, houseTile->getHouse());
-		tfs::lua::setMetatable(L, -1, "House");
-	} else {
-		lua_pushnil(L);
-	}
 	return 1;
 }
 
@@ -3067,7 +2357,7 @@ int luaNetworkMessageAddItemId(lua_State* L)
 	}
 
 	uint16_t itemId;
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		itemId = tfs::lua::getNumber<uint16_t>(L, 2);
 	} else {
 		itemId = Item::items.getItemIdByName(tfs::lua::getString(L, 2));
@@ -3099,7 +2389,7 @@ int luaNetworkMessageSeek(lua_State* L)
 {
 	// networkMessage:seek(position)
 	NetworkMessage* message = tfs::lua::getUserdata<NetworkMessage>(L, 1);
-	if (message && isNumber(L, 2)) {
+	if (message && tfs::lua::isNumber(L, 2)) {
 		tfs::lua::pushBoolean(L, message->setBufferPosition(tfs::lua::getNumber<uint16_t>(L, 2)));
 	} else {
 		lua_pushnil(L);
@@ -3750,7 +3040,7 @@ int luaItemHasAttribute(lua_State* L)
 	}
 
 	itemAttrTypes attribute;
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		attribute = tfs::lua::getNumber<itemAttrTypes>(L, 2);
 	} else if (lua_isstring(L, 2)) {
 		attribute = stringToItemAttribute(tfs::lua::getString(L, 2));
@@ -3772,7 +3062,7 @@ int luaItemGetAttribute(lua_State* L)
 	}
 
 	itemAttrTypes attribute;
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		attribute = tfs::lua::getNumber<itemAttrTypes>(L, 2);
 	} else if (lua_isstring(L, 2)) {
 		attribute = stringToItemAttribute(tfs::lua::getString(L, 2));
@@ -3800,7 +3090,7 @@ int luaItemSetAttribute(lua_State* L)
 	}
 
 	itemAttrTypes attribute;
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		attribute = tfs::lua::getNumber<itemAttrTypes>(L, 2);
 	} else if (lua_isstring(L, 2)) {
 		attribute = stringToItemAttribute(tfs::lua::getString(L, 2));
@@ -3836,7 +3126,7 @@ int luaItemRemoveAttribute(lua_State* L)
 	}
 
 	itemAttrTypes attribute;
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		attribute = tfs::lua::getNumber<itemAttrTypes>(L, 2);
 	} else if (lua_isstring(L, 2)) {
 		attribute = stringToItemAttribute(tfs::lua::getString(L, 2));
@@ -3864,7 +3154,7 @@ int luaItemGetCustomAttribute(lua_State* L)
 	}
 
 	const ItemAttributes::CustomAttribute* attr;
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		attr = item->getCustomAttribute(tfs::lua::getNumber<int64_t>(L, 2));
 	} else if (lua_isstring(L, 2)) {
 		attr = item->getCustomAttribute(tfs::lua::getString(L, 2));
@@ -3891,7 +3181,7 @@ int luaItemSetCustomAttribute(lua_State* L)
 	}
 
 	std::string key;
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		key = std::to_string(tfs::lua::getNumber<int64_t>(L, 2));
 	} else if (lua_isstring(L, 2)) {
 		key = tfs::lua::getString(L, 2);
@@ -3901,7 +3191,7 @@ int luaItemSetCustomAttribute(lua_State* L)
 	}
 
 	ItemAttributes::CustomAttribute val;
-	if (isNumber(L, 3)) {
+	if (tfs::lua::isNumber(L, 3)) {
 		double tmp = tfs::lua::getNumber<double>(L, 3);
 		if (std::floor(tmp) < tmp) {
 			val.set<double>(tmp);
@@ -3931,7 +3221,7 @@ int luaItemRemoveCustomAttribute(lua_State* L)
 		return 1;
 	}
 
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		tfs::lua::pushBoolean(L, item->removeCustomAttribute(tfs::lua::getNumber<int64_t>(L, 2)));
 	} else if (lua_isstring(L, 2)) {
 		tfs::lua::pushBoolean(L, item->removeCustomAttribute(tfs::lua::getString(L, 2)));
@@ -3996,7 +3286,7 @@ int luaItemMoveTo(lua_State* L)
 	} else {
 		Item* moveItem = nullptr;
 		ReturnValue ret = g_game->internalMoveItem(item->getParent(), toCylinder, INDEX_WHEREEVER, item,
-		                                          item->getItemCount(), &moveItem, flags);
+		                                           item->getItemCount(), &moveItem, flags);
 		if (moveItem) {
 			*itemPtr = moveItem;
 		}
@@ -4021,7 +3311,7 @@ int luaItemTransform(lua_State* L)
 	}
 
 	uint16_t itemId;
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		itemId = tfs::lua::getNumber<uint16_t>(L, 2);
 	} else {
 		itemId = Item::items.getItemIdByName(tfs::lua::getString(L, 2));
@@ -4064,7 +3354,7 @@ int luaItemDecay(lua_State* L)
 	// item:decay(decayId)
 	Item* item = tfs::lua::getUserdata<Item>(L, 1);
 	if (item) {
-		if (isNumber(L, 2)) {
+		if (tfs::lua::isNumber(L, 2)) {
 			item->setDecayTo(tfs::lua::getNumber<int32_t>(L, 2));
 		}
 
@@ -4309,7 +3599,7 @@ int luaContainerAddItem(lua_State* L)
 	}
 
 	uint16_t itemId;
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		itemId = tfs::lua::getNumber<uint16_t>(L, 2);
 	} else {
 		itemId = Item::items.getItemIdByName(tfs::lua::getString(L, 2));
@@ -4398,7 +3688,7 @@ int luaContainerGetItemCountById(lua_State* L)
 	}
 
 	uint16_t itemId;
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		itemId = tfs::lua::getNumber<uint16_t>(L, 2);
 	} else {
 		itemId = Item::items.getItemIdByName(tfs::lua::getString(L, 2));
@@ -4580,7 +3870,7 @@ int luaCreatureCreate(lua_State* L)
 {
 	// Creature(id or name or userdata)
 	Creature* creature;
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		creature = g_game->getCreatureByID(tfs::lua::getNumber<uint32_t>(L, 2));
 	} else if (lua_isstring(L, 2)) {
 		creature = g_game->getCreatureByName(tfs::lua::getString(L, 2));
@@ -5327,7 +4617,7 @@ int luaCreatureIsImmune(lua_State* L)
 		return 1;
 	}
 
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		tfs::lua::pushBoolean(L, creature->isImmune(tfs::lua::getNumber<ConditionType_t>(L, 2)));
 	} else if (Condition* condition = tfs::lua::getUserdata<Condition>(L, 2)) {
 		tfs::lua::pushBoolean(L, creature->isImmune(condition->getType()));
@@ -5438,7 +4728,8 @@ int luaCreatureSay(lua_State* L)
 	bool echo = tfs::lua::getScriptEnv()->getScriptId() == g_events->getScriptId(EventInfoId::CREATURE_ONHEAR);
 
 	if (position.x != 0) {
-		tfs::lua::pushBoolean(L, g_game->internalCreatureSay(creature, type, text, ghost, &spectators, &position, echo));
+		tfs::lua::pushBoolean(L,
+		                      g_game->internalCreatureSay(creature, type, text, ghost, &spectators, &position, echo));
 	} else {
 		tfs::lua::pushBoolean(L, g_game->internalCreatureSay(creature, type, text, ghost, &spectators, nullptr, echo));
 	}
@@ -5541,7 +4832,7 @@ int luaCreatureMove(lua_State* L)
 		return 1;
 	}
 
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		Direction direction = tfs::lua::getNumber<Direction>(L, 2);
 		if (direction > DIRECTION_LAST) {
 			lua_pushnil(L);
@@ -5571,2219 +4862,12 @@ int luaCreatureGetZone(lua_State* L)
 	return 1;
 }
 
-// Player
-int luaPlayerCreate(lua_State* L)
-{
-	// Player(id or guid or name or userdata)
-	Player* player;
-	if (isNumber(L, 2)) {
-		uint32_t id = tfs::lua::getNumber<uint32_t>(L, 2);
-		if (id >= CREATURE_ID_MIN && id <= Player::playerIDLimit) {
-			player = g_game->getPlayerByID(id);
-		} else {
-			player = g_game->getPlayerByGUID(id);
-		}
-	} else if (lua_isstring(L, 2)) {
-		ReturnValue ret = g_game->getPlayerByNameWildcard(tfs::lua::getString(L, 2), player);
-		if (ret != RETURNVALUE_NOERROR) {
-			lua_pushnil(L);
-			lua_pushnumber(L, ret);
-			return 2;
-		}
-	} else if (lua_isuserdata(L, 2)) {
-		if (tfs::lua::getUserdataType(L, 2) != tfs::lua::LuaData_Player) {
-			lua_pushnil(L);
-			return 1;
-		}
-		player = tfs::lua::getUserdata<Player>(L, 2);
-	} else {
-		player = nullptr;
-	}
-
-	if (player) {
-		tfs::lua::pushUserdata<Player>(L, player);
-		tfs::lua::setMetatable(L, -1, "Player");
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerIsPlayer(lua_State* L)
-{
-	// player:isPlayer()
-	tfs::lua::pushBoolean(L, tfs::lua::getUserdata<const Player>(L, 1) != nullptr);
-	return 1;
-}
-
-int luaPlayerGetGuid(lua_State* L)
-{
-	// player:getGuid()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getGUID());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetIp(lua_State* L)
-{
-	// player:getIp()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getIP());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetAccountId(lua_State* L)
-{
-	// player:getAccountId()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getAccount());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetLastLoginSaved(lua_State* L)
-{
-	// player:getLastLoginSaved()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getLastLoginSaved());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetLastLogout(lua_State* L)
-{
-	// player:getLastLogout()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getLastLogout());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetAccountType(lua_State* L)
-{
-	// player:getAccountType()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getAccountType());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSetAccountType(lua_State* L)
-{
-	// player:setAccountType(accountType)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		player->setAccountType(tfs::lua::getNumber<AccountType_t>(L, 2));
-		IOLoginData::setAccountType(player->getAccount(), player->getAccountType());
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetCapacity(lua_State* L)
-{
-	// player:getCapacity()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getCapacity());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSetCapacity(lua_State* L)
-{
-	// player:setCapacity(capacity)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		player->setCapacity(tfs::lua::getNumber<uint32_t>(L, 2));
-		player->sendStats();
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetFreeCapacity(lua_State* L)
-{
-	// player:getFreeCapacity()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getFreeCapacity());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetDepotChest(lua_State* L)
-{
-	// player:getDepotChest(depotId[, autoCreate = false])
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	uint32_t depotId = tfs::lua::getNumber<uint32_t>(L, 2);
-	bool autoCreate = tfs::lua::getBoolean(L, 3, false);
-	DepotChest* depotChest = player->getDepotChest(depotId, autoCreate);
-	if (depotChest) {
-		tfs::lua::pushUserdata<Item>(L, depotChest);
-		tfs::lua::setItemMetatable(L, -1, depotChest);
-	} else {
-		tfs::lua::pushBoolean(L, false);
-	}
-	return 1;
-}
-
-int luaPlayerGetInbox(lua_State* L)
-{
-	// player:getInbox()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Inbox* inbox = player->getInbox();
-	if (inbox) {
-		tfs::lua::pushUserdata<Item>(L, inbox);
-		tfs::lua::setItemMetatable(L, -1, inbox);
-	} else {
-		tfs::lua::pushBoolean(L, false);
-	}
-	return 1;
-}
-
-int luaPlayerGetSkullTime(lua_State* L)
-{
-	// player:getSkullTime()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getSkullTicks());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSetSkullTime(lua_State* L)
-{
-	// player:setSkullTime(skullTime)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		player->setSkullTicks(tfs::lua::getNumber<int64_t>(L, 2));
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetDeathPenalty(lua_State* L)
-{
-	// player:getDeathPenalty()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getLostPercent() * 100);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetExperience(lua_State* L)
-{
-	// player:getExperience()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getExperience());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerAddExperience(lua_State* L)
-{
-	// player:addExperience(experience[, sendText = false])
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		uint64_t experience = tfs::lua::getNumber<uint64_t>(L, 2);
-		bool sendText = tfs::lua::getBoolean(L, 3, false);
-		player->addExperience(nullptr, experience, sendText);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerRemoveExperience(lua_State* L)
-{
-	// player:removeExperience(experience[, sendText = false])
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		uint64_t experience = tfs::lua::getNumber<uint64_t>(L, 2);
-		bool sendText = tfs::lua::getBoolean(L, 3, false);
-		player->removeExperience(experience, sendText);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetLevel(lua_State* L)
-{
-	// player:getLevel()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getLevel());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetMagicLevel(lua_State* L)
-{
-	// player:getMagicLevel()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getMagicLevel());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetBaseMagicLevel(lua_State* L)
-{
-	// player:getBaseMagicLevel()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getBaseMagicLevel());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetMana(lua_State* L)
-{
-	// player:getMana()
-	const Player* player = tfs::lua::getUserdata<const Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getMana());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerAddMana(lua_State* L)
-{
-	// player:addMana(manaChange[, animationOnLoss = false])
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	int32_t manaChange = tfs::lua::getNumber<int32_t>(L, 2);
-	bool animationOnLoss = tfs::lua::getBoolean(L, 3, false);
-	if (!animationOnLoss && manaChange < 0) {
-		player->changeMana(manaChange);
-	} else {
-		CombatDamage damage;
-		damage.primary.value = manaChange;
-		damage.origin = ORIGIN_NONE;
-		g_game->combatChangeMana(nullptr, player, damage);
-	}
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaPlayerGetMaxMana(lua_State* L)
-{
-	// player:getMaxMana()
-	const Player* player = tfs::lua::getUserdata<const Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getMaxMana());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSetMaxMana(lua_State* L)
-{
-	// player:setMaxMana(maxMana)
-	Player* player = tfs::lua::getPlayer(L, 1);
-	if (player) {
-		player->setMaxMana(tfs::lua::getNumber<int32_t>(L, 2));
-		player->setMana(std::min<int32_t>(player->getMana(), player->getMaxMana()));
-		player->sendStats();
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetManaSpent(lua_State* L)
-{
-	// player:getManaSpent()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getSpentMana());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerAddManaSpent(lua_State* L)
-{
-	// player:addManaSpent(amount)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		player->addManaSpent(tfs::lua::getNumber<uint64_t>(L, 2));
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerRemoveManaSpent(lua_State* L)
-{
-	// player:removeManaSpent(amount[, notify = true])
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		player->removeManaSpent(tfs::lua::getNumber<uint64_t>(L, 2), tfs::lua::getBoolean(L, 3, true));
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetBaseMaxHealth(lua_State* L)
-{
-	// player:getBaseMaxHealth()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getMaxHealth());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetBaseMaxMana(lua_State* L)
-{
-	// player:getBaseMaxMana()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getMaxMana());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetSkillLevel(lua_State* L)
-{
-	// player:getSkillLevel(skillType)
-	skills_t skillType = tfs::lua::getNumber<skills_t>(L, 2);
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player && skillType <= SKILL_LAST) {
-		lua_pushnumber(L, player->getBaseSkill(skillType));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetEffectiveSkillLevel(lua_State* L)
-{
-	// player:getEffectiveSkillLevel(skillType)
-	skills_t skillType = tfs::lua::getNumber<skills_t>(L, 2);
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player && skillType <= SKILL_LAST) {
-		lua_pushnumber(L, player->getSkillLevel(skillType));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetSkillPercent(lua_State* L)
-{
-	// player:getSkillPercent(skillType)
-	skills_t skillType = tfs::lua::getNumber<skills_t>(L, 2);
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player && skillType <= SKILL_LAST) {
-		lua_pushnumber(L, player->getSkillPercent(skillType));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetSkillTries(lua_State* L)
-{
-	// player:getSkillTries(skillType)
-	skills_t skillType = tfs::lua::getNumber<skills_t>(L, 2);
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player && skillType <= SKILL_LAST) {
-		lua_pushnumber(L, player->getSkillTries(skillType));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerAddSkillTries(lua_State* L)
-{
-	// player:addSkillTries(skillType, tries)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		skills_t skillType = tfs::lua::getNumber<skills_t>(L, 2);
-		uint64_t tries = tfs::lua::getNumber<uint64_t>(L, 3);
-		player->addSkillAdvance(skillType, tries);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerRemoveSkillTries(lua_State* L)
-{
-	// player:removeSkillTries(skillType, tries[, notify = true])
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		skills_t skillType = tfs::lua::getNumber<skills_t>(L, 2);
-		uint64_t tries = tfs::lua::getNumber<uint64_t>(L, 3);
-		player->removeSkillTries(skillType, tries, tfs::lua::getBoolean(L, 4, true));
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetSpecialSkill(lua_State* L)
-{
-	// player:getSpecialSkill(specialSkillType)
-	SpecialSkills_t specialSkillType = tfs::lua::getNumber<SpecialSkills_t>(L, 2);
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player && specialSkillType <= SPECIALSKILL_LAST) {
-		lua_pushnumber(L, player->getSpecialSkill(specialSkillType));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerAddSpecialSkill(lua_State* L)
-{
-	// player:addSpecialSkill(specialSkillType, value)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	SpecialSkills_t specialSkillType = tfs::lua::getNumber<SpecialSkills_t>(L, 2);
-	if (specialSkillType > SPECIALSKILL_LAST) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	player->setVarSpecialSkill(specialSkillType, tfs::lua::getNumber<int32_t>(L, 3));
-	player->sendSkills();
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaPlayerAddOfflineTrainingTime(lua_State* L)
-{
-	// player:addOfflineTrainingTime(time)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		int32_t time = tfs::lua::getNumber<int32_t>(L, 2);
-		player->addOfflineTrainingTime(time);
-		player->sendStats();
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetOfflineTrainingTime(lua_State* L)
-{
-	// player:getOfflineTrainingTime()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getOfflineTrainingTime());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerRemoveOfflineTrainingTime(lua_State* L)
-{
-	// player:removeOfflineTrainingTime(time)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		int32_t time = tfs::lua::getNumber<int32_t>(L, 2);
-		player->removeOfflineTrainingTime(time);
-		player->sendStats();
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerAddOfflineTrainingTries(lua_State* L)
-{
-	// player:addOfflineTrainingTries(skillType, tries)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		skills_t skillType = tfs::lua::getNumber<skills_t>(L, 2);
-		uint64_t tries = tfs::lua::getNumber<uint64_t>(L, 3);
-		tfs::lua::pushBoolean(L, player->addOfflineTrainingTries(skillType, tries));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetOfflineTrainingSkill(lua_State* L)
-{
-	// player:getOfflineTrainingSkill()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getOfflineTrainingSkill());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSetOfflineTrainingSkill(lua_State* L)
-{
-	// player:setOfflineTrainingSkill(skillId)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		int32_t skillId = tfs::lua::getNumber<int32_t>(L, 2);
-		player->setOfflineTrainingSkill(skillId);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetItemCount(lua_State* L)
-{
-	// player:getItemCount(itemId[, subType = -1])
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	uint16_t itemId;
-	if (isNumber(L, 2)) {
-		itemId = tfs::lua::getNumber<uint16_t>(L, 2);
-	} else {
-		itemId = Item::items.getItemIdByName(tfs::lua::getString(L, 2));
-		if (itemId == 0) {
-			lua_pushnil(L);
-			return 1;
-		}
-	}
-
-	int32_t subType = tfs::lua::getNumber<int32_t>(L, 3, -1);
-	lua_pushnumber(L, player->getItemTypeCount(itemId, subType));
-	return 1;
-}
-
-int luaPlayerGetItemById(lua_State* L)
-{
-	// player:getItemById(itemId, deepSearch[, subType = -1])
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	uint16_t itemId;
-	if (isNumber(L, 2)) {
-		itemId = tfs::lua::getNumber<uint16_t>(L, 2);
-	} else {
-		itemId = Item::items.getItemIdByName(tfs::lua::getString(L, 2));
-		if (itemId == 0) {
-			lua_pushnil(L);
-			return 1;
-		}
-	}
-	bool deepSearch = tfs::lua::getBoolean(L, 3);
-	int32_t subType = tfs::lua::getNumber<int32_t>(L, 4, -1);
-
-	Item* item = g_game->findItemOfType(player, itemId, deepSearch, subType);
-	if (item) {
-		tfs::lua::pushUserdata<Item>(L, item);
-		tfs::lua::setItemMetatable(L, -1, item);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetVocation(lua_State* L)
-{
-	// player:getVocation()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		tfs::lua::pushUserdata<Vocation>(L, player->getVocation());
-		tfs::lua::setMetatable(L, -1, "Vocation");
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSetVocation(lua_State* L)
-{
-	// player:setVocation(id or name or userdata)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Vocation* vocation;
-	if (isNumber(L, 2)) {
-		vocation = g_vocations.getVocation(tfs::lua::getNumber<uint16_t>(L, 2));
-	} else if (lua_isstring(L, 2)) {
-		vocation = g_vocations.getVocation(g_vocations.getVocationId(tfs::lua::getString(L, 2)));
-	} else if (lua_isuserdata(L, 2)) {
-		vocation = tfs::lua::getUserdata<Vocation>(L, 2);
-	} else {
-		vocation = nullptr;
-	}
-
-	if (!vocation) {
-		tfs::lua::pushBoolean(L, false);
-		return 1;
-	}
-
-	player->setVocation(vocation->getId());
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaPlayerGetSex(lua_State* L)
-{
-	// player:getSex()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getSex());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSetSex(lua_State* L)
-{
-	// player:setSex(newSex)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		PlayerSex_t newSex = tfs::lua::getNumber<PlayerSex_t>(L, 2);
-		player->setSex(newSex);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetTown(lua_State* L)
-{
-	// player:getTown()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		tfs::lua::pushUserdata<Town>(L, player->getTown());
-		tfs::lua::setMetatable(L, -1, "Town");
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSetTown(lua_State* L)
-{
-	// player:setTown(town)
-	Town* town = tfs::lua::getUserdata<Town>(L, 2);
-	if (!town) {
-		tfs::lua::pushBoolean(L, false);
-		return 1;
-	}
-
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		player->setTown(town);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetGuild(lua_State* L)
-{
-	// player:getGuild()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Guild* guild = player->getGuild();
-	if (!guild) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	tfs::lua::pushUserdata<Guild>(L, guild);
-	tfs::lua::setMetatable(L, -1, "Guild");
-	return 1;
-}
-
-int luaPlayerSetGuild(lua_State* L)
-{
-	// player:setGuild(guild)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	player->setGuild(tfs::lua::getUserdata<Guild>(L, 2));
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaPlayerGetGuildLevel(lua_State* L)
-{
-	// player:getGuildLevel()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player && player->getGuild()) {
-		lua_pushnumber(L, player->getGuildRank()->level);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSetGuildLevel(lua_State* L)
-{
-	// player:setGuildLevel(level)
-	uint8_t level = tfs::lua::getNumber<uint8_t>(L, 2);
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player || !player->getGuild()) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	GuildRank_ptr rank = player->getGuild()->getRankByLevel(level);
-	if (!rank) {
-		tfs::lua::pushBoolean(L, false);
-	} else {
-		player->setGuildRank(rank);
-		tfs::lua::pushBoolean(L, true);
-	}
-
-	return 1;
-}
-
-int luaPlayerGetGuildNick(lua_State* L)
-{
-	// player:getGuildNick()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		tfs::lua::pushString(L, player->getGuildNick());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSetGuildNick(lua_State* L)
-{
-	// player:setGuildNick(nick)
-	const std::string& nick = tfs::lua::getString(L, 2);
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		player->setGuildNick(nick);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetGroup(lua_State* L)
-{
-	// player:getGroup()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		tfs::lua::pushUserdata<Group>(L, player->getGroup());
-		tfs::lua::setMetatable(L, -1, "Group");
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSetGroup(lua_State* L)
-{
-	// player:setGroup(group)
-	Group* group = tfs::lua::getUserdata<Group>(L, 2);
-	if (!group) {
-		tfs::lua::pushBoolean(L, false);
-		return 1;
-	}
-
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		player->setGroup(group);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetStamina(lua_State* L)
-{
-	// player:getStamina()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getStaminaMinutes());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSetStamina(lua_State* L)
-{
-	// player:setStamina(stamina)
-	uint16_t stamina = tfs::lua::getNumber<uint16_t>(L, 2);
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		player->setStaminaMinutes(std::min<uint16_t>(2520, stamina));
-		player->sendStats();
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetSoul(lua_State* L)
-{
-	// player:getSoul()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getSoul());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerAddSoul(lua_State* L)
-{
-	// player:addSoul(soulChange)
-	int32_t soulChange = tfs::lua::getNumber<int32_t>(L, 2);
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		player->changeSoul(soulChange);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetMaxSoul(lua_State* L)
-{
-	// player:getMaxSoul()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player && player->getVocation()) {
-		lua_pushnumber(L, player->getVocation()->getSoulMax());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetBankBalance(lua_State* L)
-{
-	// player:getBankBalance()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getBankBalance());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSetBankBalance(lua_State* L)
-{
-	// player:setBankBalance(bankBalance)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	int64_t balance = tfs::lua::getNumber<int64_t>(L, 2);
-	if (balance < 0) {
-		reportErrorFunc(L, "Invalid bank balance value.");
-		lua_pushnil(L);
-		return 1;
-	}
-
-	player->setBankBalance(balance);
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaPlayerGetStorageValue(lua_State* L)
-{
-	// player:getStorageValue(key)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	uint32_t key = tfs::lua::getNumber<uint32_t>(L, 2);
-	int32_t value;
-	if (player->getStorageValue(key, value)) {
-		lua_pushnumber(L, value);
-	} else {
-		lua_pushnumber(L, -1);
-	}
-	return 1;
-}
-
-int luaPlayerSetStorageValue(lua_State* L)
-{
-	// player:setStorageValue(key, value)
-	int32_t value = tfs::lua::getNumber<int32_t>(L, 3);
-	uint32_t key = tfs::lua::getNumber<uint32_t>(L, 2);
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (IS_IN_KEYRANGE(key, RESERVED_RANGE)) {
-		reportErrorFunc(L, fmt::format("Accessing reserved range: {:d}", key));
-		tfs::lua::pushBoolean(L, false);
-		return 1;
-	}
-
-	if (player) {
-		player->addStorageValue(key, value);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerAddItem(lua_State* L)
-{
-	// player:addItem(itemId[, count = 1[, canDropOnMap = true[, subType = 1[, slot = CONST_SLOT_WHEREEVER]]]])
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		tfs::lua::pushBoolean(L, false);
-		return 1;
-	}
-
-	uint16_t itemId;
-	if (isNumber(L, 2)) {
-		itemId = tfs::lua::getNumber<uint16_t>(L, 2);
-	} else {
-		itemId = Item::items.getItemIdByName(tfs::lua::getString(L, 2));
-		if (itemId == 0) {
-			lua_pushnil(L);
-			return 1;
-		}
-	}
-
-	int32_t count = tfs::lua::getNumber<int32_t>(L, 3, 1);
-	int32_t subType = tfs::lua::getNumber<int32_t>(L, 5, 1);
-
-	const ItemType& it = Item::items[itemId];
-
-	int32_t itemCount = 1;
-	int parameters = lua_gettop(L);
-	if (parameters >= 5) {
-		itemCount = std::max<int32_t>(1, count);
-	} else if (it.hasSubType()) {
-		if (it.stackable) {
-			itemCount = std::ceil(count / 100.f);
-		}
-
-		subType = count;
-	} else {
-		itemCount = std::max<int32_t>(1, count);
-	}
-
-	bool hasTable = itemCount > 1;
-	if (hasTable) {
-		lua_newtable(L);
-	} else if (itemCount == 0) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	bool canDropOnMap = tfs::lua::getBoolean(L, 4, true);
-	slots_t slot = tfs::lua::getNumber<slots_t>(L, 6, CONST_SLOT_WHEREEVER);
-	for (int32_t i = 1; i <= itemCount; ++i) {
-		int32_t stackCount = subType;
-		if (it.stackable) {
-			stackCount = std::min<int32_t>(stackCount, 100);
-			subType -= stackCount;
-		}
-
-		Item* item = Item::CreateItem(itemId, stackCount);
-		if (!item) {
-			if (!hasTable) {
-				lua_pushnil(L);
-			}
-			return 1;
-		}
-
-		ReturnValue ret = g_game->internalPlayerAddItem(player, item, canDropOnMap, slot);
-		if (ret != RETURNVALUE_NOERROR) {
-			delete item;
-			if (!hasTable) {
-				lua_pushnil(L);
-			}
-			return 1;
-		}
-
-		if (hasTable) {
-			lua_pushnumber(L, i);
-			tfs::lua::pushUserdata<Item>(L, item);
-			tfs::lua::setItemMetatable(L, -1, item);
-			lua_settable(L, -3);
-		} else {
-			tfs::lua::pushUserdata<Item>(L, item);
-			tfs::lua::setItemMetatable(L, -1, item);
-		}
-	}
-	return 1;
-}
-
-int luaPlayerAddItemEx(lua_State* L)
-{
-	// player:addItemEx(item[, canDropOnMap = false[, index = INDEX_WHEREEVER[, flags = 0]]]) player:addItemEx(item[,
-	// canDropOnMap = true[, slot = CONST_SLOT_WHEREEVER]])
-	Item* item = tfs::lua::getUserdata<Item>(L, 2);
-	if (!item) {
-		reportErrorFunc(L, tfs::lua::getErrorDesc(tfs::lua::LUA_ERROR_ITEM_NOT_FOUND));
-		tfs::lua::pushBoolean(L, false);
-		return 1;
-	}
-
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	if (item->getParent() != VirtualCylinder::virtualCylinder) {
-		reportErrorFunc(L, "Item already has a parent");
-		tfs::lua::pushBoolean(L, false);
-		return 1;
-	}
-
-	bool canDropOnMap = tfs::lua::getBoolean(L, 3, false);
-	ReturnValue returnValue;
-	if (canDropOnMap) {
-		slots_t slot = tfs::lua::getNumber<slots_t>(L, 4, CONST_SLOT_WHEREEVER);
-		returnValue = g_game->internalPlayerAddItem(player, item, true, slot);
-	} else {
-		int32_t index = tfs::lua::getNumber<int32_t>(L, 4, INDEX_WHEREEVER);
-		uint32_t flags = tfs::lua::getNumber<uint32_t>(L, 5, 0);
-		returnValue = g_game->internalAddItem(player, item, index, flags);
-	}
-
-	if (returnValue == RETURNVALUE_NOERROR) {
-		tfs::lua::ScriptEnvironment::removeTempItem(item);
-	}
-	lua_pushnumber(L, returnValue);
-	return 1;
-}
-
-int luaPlayerRemoveItem(lua_State* L)
-{
-	// player:removeItem(itemId, count[, subType = -1[, ignoreEquipped = false]])
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	uint16_t itemId;
-	if (isNumber(L, 2)) {
-		itemId = tfs::lua::getNumber<uint16_t>(L, 2);
-	} else {
-		itemId = Item::items.getItemIdByName(tfs::lua::getString(L, 2));
-		if (itemId == 0) {
-			lua_pushnil(L);
-			return 1;
-		}
-	}
-
-	uint32_t count = tfs::lua::getNumber<uint32_t>(L, 3);
-	int32_t subType = tfs::lua::getNumber<int32_t>(L, 4, -1);
-	bool ignoreEquipped = tfs::lua::getBoolean(L, 5, false);
-	tfs::lua::pushBoolean(L, player->removeItemOfType(itemId, count, subType, ignoreEquipped));
-	return 1;
-}
-
-int luaPlayerSendSupplyUsed(lua_State* L)
-{
-	// player:sendSupplyUsed(item)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		reportErrorFunc(L, tfs::lua::getErrorDesc(tfs::lua::LUA_ERROR_PLAYER_NOT_FOUND));
-		tfs::lua::pushBoolean(L, false);
-		return 1;
-	}
-
-	Item* item = tfs::lua::getUserdata<Item>(L, 2);
-	if (!item) {
-		reportErrorFunc(L, tfs::lua::getErrorDesc(tfs::lua::LUA_ERROR_ITEM_NOT_FOUND));
-		tfs::lua::pushBoolean(L, false);
-		return 1;
-	}
-
-	player->sendSupplyUsed(item->getClientID());
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaPlayerGetMoney(lua_State* L)
-{
-	// player:getMoney()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getMoney());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerAddMoney(lua_State* L)
-{
-	// player:addMoney(money)
-	uint64_t money = tfs::lua::getNumber<uint64_t>(L, 2);
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		g_game->addMoney(player, money);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerRemoveMoney(lua_State* L)
-{
-	// player:removeMoney(money)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		uint64_t money = tfs::lua::getNumber<uint64_t>(L, 2);
-		tfs::lua::pushBoolean(L, g_game->removeMoney(player, money));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerShowTextDialog(lua_State* L)
-{
-	// player:showTextDialog(id or name or userdata[, text[, canWrite[, length]]])
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	int32_t length = tfs::lua::getNumber<int32_t>(L, 5, -1);
-	bool canWrite = tfs::lua::getBoolean(L, 4, false);
-	std::string text;
-
-	int parameters = lua_gettop(L);
-	if (parameters >= 3) {
-		text = tfs::lua::getString(L, 3);
-	}
-
-	Item* item;
-	if (isNumber(L, 2)) {
-		item = Item::CreateItem(tfs::lua::getNumber<uint16_t>(L, 2));
-	} else if (lua_isstring(L, 2)) {
-		item = Item::CreateItem(Item::items.getItemIdByName(tfs::lua::getString(L, 2)));
-	} else if (lua_isuserdata(L, 2)) {
-		if (tfs::lua::getUserdataType(L, 2) != tfs::lua::LuaData_Item) {
-			tfs::lua::pushBoolean(L, false);
-			return 1;
-		}
-
-		item = tfs::lua::getUserdata<Item>(L, 2);
-	} else {
-		item = nullptr;
-	}
-
-	if (!item) {
-		reportErrorFunc(L, tfs::lua::getErrorDesc(tfs::lua::LUA_ERROR_ITEM_NOT_FOUND));
-		tfs::lua::pushBoolean(L, false);
-		return 1;
-	}
-
-	if (length < 0) {
-		length = Item::items[item->getID()].maxTextLen;
-	}
-
-	if (!text.empty()) {
-		item->setText(text);
-		length = std::max<int32_t>(text.size(), length);
-	}
-
-	item->setParent(player);
-	player->incrementWindowTextId();
-	player->setWriteItem(item, length);
-	player->sendTextWindow(item, length, canWrite);
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaPlayerSendTextMessage(lua_State* L)
-{
-	// player:sendTextMessage(type, text[, position, primaryValue = 0, primaryColor = TEXTCOLOR_NONE[, secondaryValue =
-	// 0, secondaryColor = TEXTCOLOR_NONE]]) player:sendTextMessage(type, text, channelId)
-
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	int parameters = lua_gettop(L);
-
-	TextMessage message(tfs::lua::getNumber<MessageClasses>(L, 2), tfs::lua::getString(L, 3));
-	if (parameters == 4) {
-		uint16_t channelId = tfs::lua::getNumber<uint16_t>(L, 4);
-		ChatChannel* channel = g_chat->getChannel(*player, channelId);
-		if (!channel || !channel->hasUser(*player)) {
-			tfs::lua::pushBoolean(L, false);
-			return 1;
-		}
-		message.channelId = channelId;
-	} else {
-		if (parameters >= 6) {
-			message.position = tfs::lua::getPosition(L, 4);
-			message.primary.value = tfs::lua::getNumber<int32_t>(L, 5);
-			message.primary.color = tfs::lua::getNumber<TextColor_t>(L, 6);
-		}
-
-		if (parameters >= 8) {
-			message.secondary.value = tfs::lua::getNumber<int32_t>(L, 7);
-			message.secondary.color = tfs::lua::getNumber<TextColor_t>(L, 8);
-		}
-	}
-
-	player->sendTextMessage(message);
-	tfs::lua::pushBoolean(L, true);
-
-	return 1;
-}
-
-int luaPlayerSendChannelMessage(lua_State* L)
-{
-	// player:sendChannelMessage(author, text, type, channelId)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	uint16_t channelId = tfs::lua::getNumber<uint16_t>(L, 5);
-	SpeakClasses type = tfs::lua::getNumber<SpeakClasses>(L, 4);
-	const std::string& text = tfs::lua::getString(L, 3);
-	const std::string& author = tfs::lua::getString(L, 2);
-	player->sendChannelMessage(author, text, type, channelId);
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaPlayerSendPrivateMessage(lua_State* L)
-{
-	// player:sendPrivateMessage(speaker, text[, type])
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	const Player* speaker = tfs::lua::getUserdata<const Player>(L, 2);
-	const std::string& text = tfs::lua::getString(L, 3);
-	SpeakClasses type = tfs::lua::getNumber<SpeakClasses>(L, 4, TALKTYPE_PRIVATE_FROM);
-	player->sendPrivateMessage(speaker, type, text);
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaPlayerChannelSay(lua_State* L)
-{
-	// player:channelSay(speaker, type, text, channelId)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Creature* speaker = tfs::lua::getCreature(L, 2);
-	SpeakClasses type = tfs::lua::getNumber<SpeakClasses>(L, 3);
-	const std::string& text = tfs::lua::getString(L, 4);
-	uint16_t channelId = tfs::lua::getNumber<uint16_t>(L, 5);
-	player->sendToChannel(speaker, type, text, channelId);
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaPlayerOpenChannel(lua_State* L)
-{
-	// player:openChannel(channelId)
-	uint16_t channelId = tfs::lua::getNumber<uint16_t>(L, 2);
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		g_game->playerOpenChannel(player->getID(), channelId);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetSlotItem(lua_State* L)
-{
-	// player:getSlotItem(slot)
-	const Player* player = tfs::lua::getUserdata<const Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	uint32_t slot = tfs::lua::getNumber<uint32_t>(L, 2);
-	Thing* thing = player->getThing(slot);
-	if (!thing) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Item* item = thing->getItem();
-	if (item) {
-		tfs::lua::pushUserdata<Item>(L, item);
-		tfs::lua::setItemMetatable(L, -1, item);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetParty(lua_State* L)
-{
-	// player:getParty()
-	const Player* player = tfs::lua::getUserdata<const Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Party* party = player->getParty();
-	if (party) {
-		tfs::lua::pushUserdata<Party>(L, party);
-		tfs::lua::setMetatable(L, -1, "Party");
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerAddOutfit(lua_State* L)
-{
-	// player:addOutfit(lookType)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		player->addOutfit(tfs::lua::getNumber<uint16_t>(L, 2), 0);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerAddOutfitAddon(lua_State* L)
-{
-	// player:addOutfitAddon(lookType, addon)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		uint16_t lookType = tfs::lua::getNumber<uint16_t>(L, 2);
-		uint8_t addon = tfs::lua::getNumber<uint8_t>(L, 3);
-		player->addOutfit(lookType, addon);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerRemoveOutfit(lua_State* L)
-{
-	// player:removeOutfit(lookType)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		uint16_t lookType = tfs::lua::getNumber<uint16_t>(L, 2);
-		tfs::lua::pushBoolean(L, player->removeOutfit(lookType));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerRemoveOutfitAddon(lua_State* L)
-{
-	// player:removeOutfitAddon(lookType, addon)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		uint16_t lookType = tfs::lua::getNumber<uint16_t>(L, 2);
-		uint8_t addon = tfs::lua::getNumber<uint8_t>(L, 3);
-		tfs::lua::pushBoolean(L, player->removeOutfitAddon(lookType, addon));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerHasOutfit(lua_State* L)
-{
-	// player:hasOutfit(lookType[, addon = 0])
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		uint16_t lookType = tfs::lua::getNumber<uint16_t>(L, 2);
-		uint8_t addon = tfs::lua::getNumber<uint8_t>(L, 3, 0);
-		tfs::lua::pushBoolean(L, player->hasOutfit(lookType, addon));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerCanWearOutfit(lua_State* L)
-{
-	// player:canWearOutfit(lookType[, addon = 0])
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		uint16_t lookType = tfs::lua::getNumber<uint16_t>(L, 2);
-		uint8_t addon = tfs::lua::getNumber<uint8_t>(L, 3, 0);
-		tfs::lua::pushBoolean(L, player->canWear(lookType, addon));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSendOutfitWindow(lua_State* L)
-{
-	// player:sendOutfitWindow()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		player->sendOutfitWindow();
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSendEditPodium(lua_State* L)
-{
-	// player:sendEditPodium(item)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	Item* item = tfs::lua::getUserdata<Item>(L, 2);
-	if (player && item) {
-		player->sendPodiumWindow(item);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerAddMount(lua_State* L)
-{
-	// player:addMount(mountId or mountName)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	uint8_t mountId;
-	if (isNumber(L, 2)) {
-		mountId = tfs::lua::getNumber<uint8_t>(L, 2);
-	} else {
-		Mount* mount = g_game->mounts.getMountByName(tfs::lua::getString(L, 2));
-		if (!mount) {
-			lua_pushnil(L);
-			return 1;
-		}
-		mountId = mount->id;
-	}
-	tfs::lua::pushBoolean(L, player->tameMount(mountId));
-	return 1;
-}
-
-int luaPlayerRemoveMount(lua_State* L)
-{
-	// player:removeMount(mountId or mountName)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	uint8_t mountId;
-	if (isNumber(L, 2)) {
-		mountId = tfs::lua::getNumber<uint8_t>(L, 2);
-	} else {
-		Mount* mount = g_game->mounts.getMountByName(tfs::lua::getString(L, 2));
-		if (!mount) {
-			lua_pushnil(L);
-			return 1;
-		}
-		mountId = mount->id;
-	}
-	tfs::lua::pushBoolean(L, player->untameMount(mountId));
-	return 1;
-}
-
-int luaPlayerHasMount(lua_State* L)
-{
-	// player:hasMount(mountId or mountName)
-	const Player* player = tfs::lua::getUserdata<const Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Mount* mount = nullptr;
-	if (isNumber(L, 2)) {
-		mount = g_game->mounts.getMountByID(tfs::lua::getNumber<uint8_t>(L, 2));
-	} else {
-		mount = g_game->mounts.getMountByName(tfs::lua::getString(L, 2));
-	}
-
-	if (mount) {
-		tfs::lua::pushBoolean(L, player->hasMount(mount));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetPremiumEndsAt(lua_State* L)
-{
-	// player:getPremiumEndsAt()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getPremiumTime());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSetPremiumEndsAt(lua_State* L)
-{
-	// player:setPremiumEndsAt(timestamp)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	time_t timestamp = tfs::lua::getNumber<time_t>(L, 2);
-
-	player->setPremiumTime(timestamp);
-	IOLoginData::updatePremiumTime(player->getAccount(), timestamp);
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaPlayerHasBlessing(lua_State* L)
-{
-	// player:hasBlessing(blessing)
-	uint8_t blessing = tfs::lua::getNumber<uint8_t>(L, 2) - 1;
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		tfs::lua::pushBoolean(L, player->hasBlessing(blessing));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerAddBlessing(lua_State* L)
-{
-	// player:addBlessing(blessing)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	uint8_t blessing = tfs::lua::getNumber<uint8_t>(L, 2) - 1;
-	if (player->hasBlessing(blessing)) {
-		tfs::lua::pushBoolean(L, false);
-		return 1;
-	}
-
-	player->addBlessing(blessing);
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaPlayerRemoveBlessing(lua_State* L)
-{
-	// player:removeBlessing(blessing)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	uint8_t blessing = tfs::lua::getNumber<uint8_t>(L, 2) - 1;
-	if (!player->hasBlessing(blessing)) {
-		tfs::lua::pushBoolean(L, false);
-		return 1;
-	}
-
-	player->removeBlessing(blessing);
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaPlayerCanLearnSpell(lua_State* L)
-{
-	// player:canLearnSpell(spellName)
-	const Player* player = tfs::lua::getUserdata<const Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	const std::string& spellName = tfs::lua::getString(L, 2);
-	InstantSpell* spell = g_spells->getInstantSpellByName(spellName);
-	if (!spell) {
-		reportErrorFunc(L, "Spell \"" + spellName + "\" not found");
-		tfs::lua::pushBoolean(L, false);
-		return 1;
-	}
-
-	if (player->hasFlag(PlayerFlag_IgnoreSpellCheck)) {
-		tfs::lua::pushBoolean(L, true);
-		return 1;
-	}
-
-	const auto& vocMap = spell->getVocMap();
-	if (vocMap.count(player->getVocationId()) == 0) {
-		tfs::lua::pushBoolean(L, false);
-	} else if (player->getLevel() < spell->getLevel()) {
-		tfs::lua::pushBoolean(L, false);
-	} else if (player->getMagicLevel() < spell->getMagicLevel()) {
-		tfs::lua::pushBoolean(L, false);
-	} else {
-		tfs::lua::pushBoolean(L, true);
-	}
-	return 1;
-}
-
-int luaPlayerLearnSpell(lua_State* L)
-{
-	// player:learnSpell(spellName)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		const std::string& spellName = tfs::lua::getString(L, 2);
-		player->learnInstantSpell(spellName);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerForgetSpell(lua_State* L)
-{
-	// player:forgetSpell(spellName)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		const std::string& spellName = tfs::lua::getString(L, 2);
-		player->forgetInstantSpell(spellName);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerHasLearnedSpell(lua_State* L)
-{
-	// player:hasLearnedSpell(spellName)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		const std::string& spellName = tfs::lua::getString(L, 2);
-		tfs::lua::pushBoolean(L, player->hasLearnedInstantSpell(spellName));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSendTutorial(lua_State* L)
-{
-	// player:sendTutorial(tutorialId)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		uint8_t tutorialId = tfs::lua::getNumber<uint8_t>(L, 2);
-		player->sendTutorial(tutorialId);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerAddMapMark(lua_State* L)
-{
-	// player:addMapMark(position, type, description)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		const Position& position = tfs::lua::getPosition(L, 2);
-		uint8_t type = tfs::lua::getNumber<uint8_t>(L, 3);
-		const std::string& description = tfs::lua::getString(L, 4);
-		player->sendAddMarker(position, type, description);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSave(lua_State* L)
-{
-	// player:save()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		player->setLoginPosition(player->getPosition());
-		tfs::lua::pushBoolean(L, IOLoginData::savePlayer(player));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerPopupFYI(lua_State* L)
-{
-	// player:popupFYI(message)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		const std::string& message = tfs::lua::getString(L, 2);
-		player->sendFYIBox(message);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerIsPzLocked(lua_State* L)
-{
-	// player:isPzLocked()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		tfs::lua::pushBoolean(L, player->isPzLocked());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetClient(lua_State* L)
-{
-	// player:getClient()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_createtable(L, 0, 2);
-		tfs::lua::setField(L, "version", player->getProtocolVersion());
-		tfs::lua::setField(L, "os", player->getOperatingSystem());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetHouse(lua_State* L)
-{
-	// player:getHouse()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	House* house = g_game->map.houses.getHouseByPlayerId(player->getGUID());
-	if (house) {
-		tfs::lua::pushUserdata<House>(L, house);
-		tfs::lua::setMetatable(L, -1, "House");
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerSendHouseWindow(lua_State* L)
-{
-	// player:sendHouseWindow(house, listId)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	House* house = tfs::lua::getUserdata<House>(L, 2);
-	if (!house) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	uint32_t listId = tfs::lua::getNumber<uint32_t>(L, 3);
-	player->sendHouseWindow(house, listId);
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaPlayerSetEditHouse(lua_State* L)
-{
-	// player:setEditHouse(house, listId)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	House* house = tfs::lua::getUserdata<House>(L, 2);
-	if (!house) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	uint32_t listId = tfs::lua::getNumber<uint32_t>(L, 3);
-	player->setEditHouse(house, listId);
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaPlayerSetGhostMode(lua_State* L)
-{
-	// player:setGhostMode(enabled[, magicEffect = CONST_ME_TELEPORT])
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	bool enabled = tfs::lua::getBoolean(L, 2);
-	if (player->isInGhostMode() == enabled) {
-		tfs::lua::pushBoolean(L, true);
-		return 1;
-	}
-
-	MagicEffectClasses magicEffect = tfs::lua::getNumber<MagicEffectClasses>(L, 3, CONST_ME_TELEPORT);
-
-	player->switchGhostMode();
-
-	Tile* tile = player->getTile();
-	const Position& position = player->getPosition();
-	const bool isInvisible = player->isInvisible();
-
-	SpectatorVec spectators;
-	g_game->map.getSpectators(spectators, position, true, true);
-	for (Creature* spectator : spectators) {
-		Player* tmpPlayer = spectator->getPlayer();
-		if (tmpPlayer != player && !tmpPlayer->isAccessPlayer()) {
-			if (enabled) {
-				tmpPlayer->sendRemoveTileCreature(player, position, tile->getClientIndexOfCreature(tmpPlayer, player));
-			} else {
-				tmpPlayer->sendCreatureAppear(player, position, magicEffect);
-			}
-		} else {
-			if (isInvisible) {
-				continue;
-			}
-
-			tmpPlayer->sendCreatureChangeVisible(player, !enabled);
-		}
-	}
-
-	if (player->isInGhostMode()) {
-		for (const auto& it : g_game->getPlayers()) {
-			if (!it.second->isAccessPlayer()) {
-				it.second->notifyStatusChange(player, VIPSTATUS_OFFLINE);
-			}
-		}
-		IOLoginData::updateOnlineStatus(player->getGUID(), false);
-	} else {
-		for (const auto& it : g_game->getPlayers()) {
-			if (!it.second->isAccessPlayer()) {
-				it.second->notifyStatusChange(player, VIPSTATUS_ONLINE);
-			}
-		}
-		IOLoginData::updateOnlineStatus(player->getGUID(), true);
-	}
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaPlayerGetContainerId(lua_State* L)
-{
-	// player:getContainerId(container)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Container* container = tfs::lua::getUserdata<Container>(L, 2);
-	if (container) {
-		lua_pushnumber(L, player->getContainerID(container));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetContainerById(lua_State* L)
-{
-	// player:getContainerById(id)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Container* container = player->getContainerByID(tfs::lua::getNumber<uint8_t>(L, 2));
-	if (container) {
-		tfs::lua::pushUserdata<Container>(L, container);
-		tfs::lua::setMetatable(L, -1, "Container");
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetContainerIndex(lua_State* L)
-{
-	// player:getContainerIndex(id)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getContainerIndex(tfs::lua::getNumber<uint8_t>(L, 2)));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetInstantSpells(lua_State* L)
-{
-	// player:getInstantSpells()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	std::vector<const InstantSpell*> spells;
-	for (auto& spell : g_spells->getInstantSpells()) {
-		if (spell.second.canCast(player)) {
-			spells.push_back(&spell.second);
-		}
-	}
-
-	lua_createtable(L, spells.size(), 0);
-
-	int index = 0;
-	for (auto spell : spells) {
-		tfs::lua::pushInstantSpell(L, *spell);
-		lua_rawseti(L, -2, ++index);
-	}
-	return 1;
-}
-
-int luaPlayerCanCast(lua_State* L)
-{
-	// player:canCast(spell)
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	InstantSpell* spell = tfs::lua::getUserdata<InstantSpell>(L, 2);
-	if (player && spell) {
-		tfs::lua::pushBoolean(L, spell->canCast(player));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerHasChaseMode(lua_State* L)
-{
-	// player:hasChaseMode()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		tfs::lua::pushBoolean(L, player->getChaseMode());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerHasSecureMode(lua_State* L)
-{
-	// player:hasSecureMode()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		tfs::lua::pushBoolean(L, player->getSecureMode());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetFightMode(lua_State* L)
-{
-	// player:getFightMode()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (player) {
-		lua_pushnumber(L, player->getFightMode());
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaPlayerGetStoreInbox(lua_State* L)
-{
-	// player:getStoreInbox()
-	Player* player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	Container* storeInbox = player->getStoreInbox();
-	if (!storeInbox) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	tfs::lua::pushUserdata<Container>(L, storeInbox);
-	tfs::lua::setMetatable(L, -1, "Container");
-	return 1;
-}
-
-int luaPlayerIsNearDepotBox(lua_State* L)
-{
-	// player:isNearDepotBox()
-	const Player* const player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	tfs::lua::pushBoolean(L, player->isNearDepotBox());
-	return 1;
-}
-
-int luaPlayerGetIdleTime(lua_State* L)
-{
-	// player:getIdleTime()
-	const Player* const player = tfs::lua::getUserdata<Player>(L, 1);
-	if (!player) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	lua_pushnumber(L, player->getIdleTime());
-	return 1;
-}
-
 // Monster
 int luaMonsterCreate(lua_State* L)
 {
 	// Monster(id or userdata)
 	Monster* monster;
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		monster = g_game->getMonsterByID(tfs::lua::getNumber<uint32_t>(L, 2));
 	} else if (lua_isuserdata(L, 2)) {
 		if (tfs::lua::getUserdataType(L, 2) != tfs::lua::LuaData_Monster) {
@@ -8161,7 +5245,7 @@ int luaNpcCreate(lua_State* L)
 	// Npc([id or name or userdata])
 	Npc* npc;
 	if (lua_gettop(L) >= 2) {
-		if (isNumber(L, 2)) {
+		if (tfs::lua::isNumber(L, 2)) {
 			npc = g_game->getNpcByID(tfs::lua::getNumber<uint32_t>(L, 2));
 		} else if (lua_isstring(L, 2)) {
 			npc = g_game->getNpcByName(tfs::lua::getString(L, 2));
@@ -8231,7 +5315,7 @@ int luaNpcSetSpeechBubble(lua_State* L)
 		return 1;
 	}
 
-	if (!isNumber(L, 2)) {
+	if (!tfs::lua::isNumber(L, 2)) {
 		lua_pushnil(L);
 		return 1;
 	}
@@ -8499,7 +5583,7 @@ int luaVocationCreate(lua_State* L)
 {
 	// Vocation(id or name)
 	uint32_t id;
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		id = tfs::lua::getNumber<uint32_t>(L, 2);
 	} else {
 		id = g_vocations.getVocationId(tfs::lua::getString(L, 2));
@@ -8789,7 +5873,7 @@ int luaTownCreate(lua_State* L)
 {
 	// Town(id or name)
 	Town* town;
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		town = g_game->map.towns.getTown(tfs::lua::getNumber<uint32_t>(L, 2));
 	} else if (lua_isstring(L, 2)) {
 		town = g_game->map.towns.getTown(tfs::lua::getString(L, 2));
@@ -9300,7 +6384,7 @@ int luaItemTypeCreate(lua_State* L)
 {
 	// ItemType(id or name)
 	uint32_t id;
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		id = tfs::lua::getNumber<uint32_t>(L, 2);
 	} else if (lua_isstring(L, 2)) {
 		id = Item::items.getItemIdByName(tfs::lua::getString(L, 2));
@@ -11092,7 +8176,7 @@ int luaMonsterTypeSkull(lua_State* L)
 		if (lua_gettop(L) == 1) {
 			lua_pushnumber(L, monsterType->info.skull);
 		} else {
-			if (isNumber(L, 2)) {
+			if (tfs::lua::isNumber(L, 2)) {
 				monsterType->info.skull = tfs::lua::getNumber<Skulls_t>(L, 2);
 			} else {
 				monsterType->info.skull = getSkullType(tfs::lua::getString(L, 2));
@@ -11828,7 +8912,7 @@ int luaLootSetId(lua_State* L)
 	// loot:setId(id or name)
 	Loot* loot = tfs::lua::getUserdata<Loot>(L, 1);
 	if (loot) {
-		if (isNumber(L, 2)) {
+		if (tfs::lua::isNumber(L, 2)) {
 			loot->lootBlock.id = tfs::lua::getNumber<uint16_t>(L, 2);
 		} else {
 			auto name = tfs::lua::getString(L, 2);
@@ -12255,7 +9339,7 @@ int luaMonsterSpellSetOutfit(lua_State* L)
 	if (spell) {
 		if (lua_istable(L, 2)) {
 			spell->outfit = tfs::lua::getOutfit(L, 2);
-		} else if (isNumber(L, 2)) {
+		} else if (tfs::lua::isNumber(L, 2)) {
 			spell->outfit.lookTypeEx = tfs::lua::getNumber<uint16_t>(L, 2);
 		} else if (lua_isstring(L, 2)) {
 			MonsterType* mType = g_monsters.getMonsterType(tfs::lua::getString(L, 2));
@@ -12518,7 +9602,7 @@ int luaSpellCreate(lua_State* L)
 
 	SpellType_t spellType = SPELL_UNDEFINED;
 
-	if (isNumber(L, 2)) {
+	if (tfs::lua::isNumber(L, 2)) {
 		int32_t id = tfs::lua::getNumber<int32_t>(L, 2);
 		RuneSpell* rune = g_spells->getRuneSpell(id);
 
@@ -13539,675 +10623,6 @@ int luaActionCheckFloor(lua_State* L)
 	Action* action = tfs::lua::getUserdata<Action>(L, 1);
 	if (action) {
 		action->setCheckFloor(tfs::lua::getBoolean(L, 2));
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaCreateTalkaction(lua_State* L)
-{
-	// TalkAction(words)
-	if (tfs::lua::getScriptEnv()->getScriptInterface() != &g_scripts->getScriptInterface()) {
-		reportErrorFunc(L, "TalkActions can only be registered in the Scripts interface.");
-		lua_pushnil(L);
-		return 1;
-	}
-
-	TalkAction* talk = new TalkAction(tfs::lua::getScriptEnv()->getScriptInterface());
-	if (talk) {
-		for (int i = 2; i <= lua_gettop(L); i++) {
-			talk->setWords(tfs::lua::getString(L, i));
-		}
-		talk->fromLua = true;
-		tfs::lua::pushUserdata<TalkAction>(L, talk);
-		tfs::lua::setMetatable(L, -1, "TalkAction");
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTalkactionOnSay(lua_State* L)
-{
-	// talkAction:onSay(callback)
-	TalkAction* talk = tfs::lua::getUserdata<TalkAction>(L, 1);
-	if (talk) {
-		if (!talk->loadCallback()) {
-			tfs::lua::pushBoolean(L, false);
-			return 1;
-		}
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTalkactionRegister(lua_State* L)
-{
-	// talkAction:register()
-	TalkAction* talk = tfs::lua::getUserdata<TalkAction>(L, 1);
-	if (talk) {
-		if (!talk->isScripted()) {
-			tfs::lua::pushBoolean(L, false);
-			return 1;
-		}
-		tfs::lua::pushBoolean(L, g_talkActions->registerLuaEvent(talk));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTalkactionSeparator(lua_State* L)
-{
-	// talkAction:separator(sep)
-	TalkAction* talk = tfs::lua::getUserdata<TalkAction>(L, 1);
-	if (talk) {
-		talk->setSeparator(tfs::lua::getString(L, 2).c_str());
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTalkactionAccess(lua_State* L)
-{
-	// talkAction:access(needAccess = false)
-	TalkAction* talk = tfs::lua::getUserdata<TalkAction>(L, 1);
-	if (talk) {
-		talk->setNeedAccess(tfs::lua::getBoolean(L, 2));
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaTalkactionAccountType(lua_State* L)
-{
-	// talkAction:accountType(AccountType_t = ACCOUNT_TYPE_NORMAL)
-	TalkAction* talk = tfs::lua::getUserdata<TalkAction>(L, 1);
-	if (talk) {
-		talk->setRequiredAccountType(tfs::lua::getNumber<AccountType_t>(L, 2));
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaCreateCreatureEvent(lua_State* L)
-{
-	// CreatureEvent(eventName)
-	if (tfs::lua::getScriptEnv()->getScriptInterface() != &g_scripts->getScriptInterface()) {
-		reportErrorFunc(L, "CreatureEvents can only be registered in the Scripts interface.");
-		lua_pushnil(L);
-		return 1;
-	}
-
-	CreatureEvent* creature = new CreatureEvent(tfs::lua::getScriptEnv()->getScriptInterface());
-	if (creature) {
-		creature->setName(tfs::lua::getString(L, 2));
-		creature->fromLua = true;
-		tfs::lua::pushUserdata<CreatureEvent>(L, creature);
-		tfs::lua::setMetatable(L, -1, "CreatureEvent");
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaCreatureEventType(lua_State* L)
-{
-	// creatureevent:type(callback)
-	CreatureEvent* creature = tfs::lua::getUserdata<CreatureEvent>(L, 1);
-	if (creature) {
-		std::string typeName = tfs::lua::getString(L, 2);
-		std::string tmpStr = boost::algorithm::to_lower_copy(typeName);
-		if (tmpStr == "login") {
-			creature->setEventType(CREATURE_EVENT_LOGIN);
-		} else if (tmpStr == "logout") {
-			creature->setEventType(CREATURE_EVENT_LOGOUT);
-		} else if (tmpStr == "think") {
-			creature->setEventType(CREATURE_EVENT_THINK);
-		} else if (tmpStr == "preparedeath") {
-			creature->setEventType(CREATURE_EVENT_PREPAREDEATH);
-		} else if (tmpStr == "death") {
-			creature->setEventType(CREATURE_EVENT_DEATH);
-		} else if (tmpStr == "kill") {
-			creature->setEventType(CREATURE_EVENT_KILL);
-		} else if (tmpStr == "advance") {
-			creature->setEventType(CREATURE_EVENT_ADVANCE);
-		} else if (tmpStr == "modalwindow") {
-			creature->setEventType(CREATURE_EVENT_MODALWINDOW);
-		} else if (tmpStr == "textedit") {
-			creature->setEventType(CREATURE_EVENT_TEXTEDIT);
-		} else if (tmpStr == "healthchange") {
-			creature->setEventType(CREATURE_EVENT_HEALTHCHANGE);
-		} else if (tmpStr == "manachange") {
-			creature->setEventType(CREATURE_EVENT_MANACHANGE);
-		} else if (tmpStr == "extendedopcode") {
-			creature->setEventType(CREATURE_EVENT_EXTENDED_OPCODE);
-		} else {
-			std::cout << "[Error - CreatureEvent::configureLuaEvent] Invalid type for creature event: " << typeName
-			          << std::endl;
-			tfs::lua::pushBoolean(L, false);
-		}
-		creature->setLoaded(true);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaCreatureEventRegister(lua_State* L)
-{
-	// creatureevent:register()
-	CreatureEvent* creature = tfs::lua::getUserdata<CreatureEvent>(L, 1);
-	if (creature) {
-		if (!creature->isScripted()) {
-			tfs::lua::pushBoolean(L, false);
-			return 1;
-		}
-		tfs::lua::pushBoolean(L, g_creatureEvents->registerLuaEvent(creature));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaCreatureEventOnCallback(lua_State* L)
-{
-	// creatureevent:onLogin / logout / etc. (callback)
-	CreatureEvent* creature = tfs::lua::getUserdata<CreatureEvent>(L, 1);
-	if (creature) {
-		if (!creature->loadCallback()) {
-			tfs::lua::pushBoolean(L, false);
-			return 1;
-		}
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaCreateMoveEvent(lua_State* L)
-{
-	// MoveEvent()
-	if (tfs::lua::getScriptEnv()->getScriptInterface() != &g_scripts->getScriptInterface()) {
-		reportErrorFunc(L, "MoveEvents can only be registered in the Scripts interface.");
-		lua_pushnil(L);
-		return 1;
-	}
-
-	MoveEvent* moveevent = new MoveEvent(tfs::lua::getScriptEnv()->getScriptInterface());
-	if (moveevent) {
-		moveevent->fromLua = true;
-		tfs::lua::pushUserdata<MoveEvent>(L, moveevent);
-		tfs::lua::setMetatable(L, -1, "MoveEvent");
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaMoveEventType(lua_State* L)
-{
-	// moveevent:type(callback)
-	MoveEvent* moveevent = tfs::lua::getUserdata<MoveEvent>(L, 1);
-	if (moveevent) {
-		std::string typeName = tfs::lua::getString(L, 2);
-		std::string tmpStr = boost::algorithm::to_lower_copy(typeName);
-		if (tmpStr == "stepin") {
-			moveevent->setEventType(MOVE_EVENT_STEP_IN);
-			moveevent->stepFunction = moveevent->StepInField;
-		} else if (tmpStr == "stepout") {
-			moveevent->setEventType(MOVE_EVENT_STEP_OUT);
-			moveevent->stepFunction = moveevent->StepOutField;
-		} else if (tmpStr == "equip") {
-			moveevent->setEventType(MOVE_EVENT_EQUIP);
-			moveevent->equipFunction = moveevent->EquipItem;
-		} else if (tmpStr == "deequip") {
-			moveevent->setEventType(MOVE_EVENT_DEEQUIP);
-			moveevent->equipFunction = moveevent->DeEquipItem;
-		} else if (tmpStr == "additem") {
-			moveevent->setEventType(MOVE_EVENT_ADD_ITEM);
-			moveevent->moveFunction = moveevent->AddItemField;
-		} else if (tmpStr == "removeitem") {
-			moveevent->setEventType(MOVE_EVENT_REMOVE_ITEM);
-			moveevent->moveFunction = moveevent->RemoveItemField;
-		} else {
-			std::cout << "Error: [MoveEvent::configureMoveEvent] No valid event name " << typeName << std::endl;
-			tfs::lua::pushBoolean(L, false);
-		}
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaMoveEventRegister(lua_State* L)
-{
-	// moveevent:register()
-	MoveEvent* moveevent = tfs::lua::getUserdata<MoveEvent>(L, 1);
-	if (moveevent) {
-		if ((moveevent->getEventType() == MOVE_EVENT_EQUIP || moveevent->getEventType() == MOVE_EVENT_DEEQUIP) &&
-		    moveevent->getSlot() == SLOTP_WHEREEVER) {
-			uint32_t id = moveevent->getItemIdRange().at(0);
-			ItemType& it = Item::items.getItemType(id);
-			moveevent->setSlot(it.slotPosition);
-		}
-		if (!moveevent->isScripted()) {
-			tfs::lua::pushBoolean(L, g_moveEvents->registerLuaFunction(moveevent));
-			return 1;
-		}
-		tfs::lua::pushBoolean(L, g_moveEvents->registerLuaEvent(moveevent));
-		moveevent->clearItemIdRange();
-		moveevent->clearActionIdRange();
-		moveevent->clearUniqueIdRange();
-		moveevent->clearPosList();
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaMoveEventOnCallback(lua_State* L)
-{
-	// moveevent:onEquip / deEquip / etc. (callback)
-	MoveEvent* moveevent = tfs::lua::getUserdata<MoveEvent>(L, 1);
-	if (moveevent) {
-		if (!moveevent->loadCallback()) {
-			tfs::lua::pushBoolean(L, false);
-			return 1;
-		}
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaMoveEventSlot(lua_State* L)
-{
-	// moveevent:slot(slot)
-	MoveEvent* moveevent = tfs::lua::getUserdata<MoveEvent>(L, 1);
-	if (!moveevent) {
-		lua_pushnil(L);
-		return 1;
-	}
-
-	if (moveevent->getEventType() == MOVE_EVENT_EQUIP || moveevent->getEventType() == MOVE_EVENT_DEEQUIP) {
-		std::string slotName = boost::algorithm::to_lower_copy(tfs::lua::getString(L, 2));
-		if (slotName == "head") {
-			moveevent->setSlot(SLOTP_HEAD);
-		} else if (slotName == "necklace") {
-			moveevent->setSlot(SLOTP_NECKLACE);
-		} else if (slotName == "backpack") {
-			moveevent->setSlot(SLOTP_BACKPACK);
-		} else if (slotName == "armor" || slotName == "body") {
-			moveevent->setSlot(SLOTP_ARMOR);
-		} else if (slotName == "right-hand") {
-			moveevent->setSlot(SLOTP_RIGHT);
-		} else if (slotName == "left-hand") {
-			moveevent->setSlot(SLOTP_LEFT);
-		} else if (slotName == "hand" || slotName == "shield") {
-			moveevent->setSlot(SLOTP_RIGHT | SLOTP_LEFT);
-		} else if (slotName == "legs") {
-			moveevent->setSlot(SLOTP_LEGS);
-		} else if (slotName == "feet") {
-			moveevent->setSlot(SLOTP_FEET);
-		} else if (slotName == "ring") {
-			moveevent->setSlot(SLOTP_RING);
-		} else if (slotName == "ammo") {
-			moveevent->setSlot(SLOTP_AMMO);
-		} else {
-			std::cout << "[Warning - MoveEvent::configureMoveEvent] Unknown slot type: " << slotName << std::endl;
-			tfs::lua::pushBoolean(L, false);
-			return 1;
-		}
-	}
-
-	tfs::lua::pushBoolean(L, true);
-	return 1;
-}
-
-int luaMoveEventLevel(lua_State* L)
-{
-	// moveevent:level(lvl)
-	MoveEvent* moveevent = tfs::lua::getUserdata<MoveEvent>(L, 1);
-	if (moveevent) {
-		moveevent->setRequiredLevel(tfs::lua::getNumber<uint32_t>(L, 2));
-		moveevent->setWieldInfo(WIELDINFO_LEVEL);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaMoveEventMagLevel(lua_State* L)
-{
-	// moveevent:magicLevel(lvl)
-	MoveEvent* moveevent = tfs::lua::getUserdata<MoveEvent>(L, 1);
-	if (moveevent) {
-		moveevent->setRequiredMagLevel(tfs::lua::getNumber<uint32_t>(L, 2));
-		moveevent->setWieldInfo(WIELDINFO_MAGLV);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaMoveEventPremium(lua_State* L)
-{
-	// moveevent:premium(bool)
-	MoveEvent* moveevent = tfs::lua::getUserdata<MoveEvent>(L, 1);
-	if (moveevent) {
-		moveevent->setNeedPremium(tfs::lua::getBoolean(L, 2));
-		moveevent->setWieldInfo(WIELDINFO_PREMIUM);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaMoveEventVocation(lua_State* L)
-{
-	// moveevent:vocation(vocName[, showInDescription = false, lastVoc = false])
-	MoveEvent* moveevent = tfs::lua::getUserdata<MoveEvent>(L, 1);
-	if (moveevent) {
-		moveevent->addVocEquipMap(tfs::lua::getString(L, 2));
-		moveevent->setWieldInfo(WIELDINFO_VOCREQ);
-		std::string tmp;
-		bool showInDescription = false;
-		bool lastVoc = false;
-		if (tfs::lua::getBoolean(L, 3)) {
-			showInDescription = tfs::lua::getBoolean(L, 3);
-		}
-		if (tfs::lua::getBoolean(L, 4)) {
-			lastVoc = tfs::lua::getBoolean(L, 4);
-		}
-		if (showInDescription) {
-			if (moveevent->getVocationString().empty()) {
-				tmp = boost::algorithm::to_lower_copy(tfs::lua::getString(L, 2));
-				tmp += "s";
-				moveevent->setVocationString(tmp);
-			} else {
-				tmp = moveevent->getVocationString();
-				if (lastVoc) {
-					tmp += " and ";
-				} else {
-					tmp += ", ";
-				}
-				tmp += boost::algorithm::to_lower_copy(tfs::lua::getString(L, 2));
-				tmp += "s";
-				moveevent->setVocationString(tmp);
-			}
-		}
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaMoveEventTileItem(lua_State* L)
-{
-	// moveevent:tileItem(bool)
-	MoveEvent* moveevent = tfs::lua::getUserdata<MoveEvent>(L, 1);
-	if (moveevent) {
-		moveevent->setTileItem(tfs::lua::getBoolean(L, 2));
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaMoveEventItemId(lua_State* L)
-{
-	// moveevent:id(ids)
-	MoveEvent* moveevent = tfs::lua::getUserdata<MoveEvent>(L, 1);
-	if (moveevent) {
-		int parameters = lua_gettop(L) - 1; // - 1 because self is a parameter aswell, which we want to skip ofc
-		if (parameters > 1) {
-			for (int i = 0; i < parameters; ++i) {
-				moveevent->addItemId(tfs::lua::getNumber<uint32_t>(L, 2 + i));
-			}
-		} else {
-			moveevent->addItemId(tfs::lua::getNumber<uint32_t>(L, 2));
-		}
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaMoveEventActionId(lua_State* L)
-{
-	// moveevent:aid(ids)
-	MoveEvent* moveevent = tfs::lua::getUserdata<MoveEvent>(L, 1);
-	if (moveevent) {
-		int parameters = lua_gettop(L) - 1; // - 1 because self is a parameter aswell, which we want to skip ofc
-		if (parameters > 1) {
-			for (int i = 0; i < parameters; ++i) {
-				moveevent->addActionId(tfs::lua::getNumber<uint32_t>(L, 2 + i));
-			}
-		} else {
-			moveevent->addActionId(tfs::lua::getNumber<uint32_t>(L, 2));
-		}
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaMoveEventUniqueId(lua_State* L)
-{
-	// moveevent:uid(ids)
-	MoveEvent* moveevent = tfs::lua::getUserdata<MoveEvent>(L, 1);
-	if (moveevent) {
-		int parameters = lua_gettop(L) - 1; // - 1 because self is a parameter aswell, which we want to skip ofc
-		if (parameters > 1) {
-			for (int i = 0; i < parameters; ++i) {
-				moveevent->addUniqueId(tfs::lua::getNumber<uint32_t>(L, 2 + i));
-			}
-		} else {
-			moveevent->addUniqueId(tfs::lua::getNumber<uint32_t>(L, 2));
-		}
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaMoveEventPosition(lua_State* L)
-{
-	// moveevent:position(positions)
-	MoveEvent* moveevent = tfs::lua::getUserdata<MoveEvent>(L, 1);
-	if (moveevent) {
-		int parameters = lua_gettop(L) - 1; // - 1 because self is a parameter aswell, which we want to skip ofc
-		if (parameters > 1) {
-			for (int i = 0; i < parameters; ++i) {
-				moveevent->addPosList(tfs::lua::getPosition(L, 2 + i));
-			}
-		} else {
-			moveevent->addPosList(tfs::lua::getPosition(L, 2));
-		}
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaCreateGlobalEvent(lua_State* L)
-{
-	// GlobalEvent(eventName)
-	if (tfs::lua::getScriptEnv()->getScriptInterface() != &g_scripts->getScriptInterface()) {
-		reportErrorFunc(L, "GlobalEvents can only be registered in the Scripts interface.");
-		lua_pushnil(L);
-		return 1;
-	}
-
-	GlobalEvent* global = new GlobalEvent(tfs::lua::getScriptEnv()->getScriptInterface());
-	if (global) {
-		global->setName(tfs::lua::getString(L, 2));
-		global->setEventType(GLOBALEVENT_NONE);
-		global->fromLua = true;
-		tfs::lua::pushUserdata<GlobalEvent>(L, global);
-		tfs::lua::setMetatable(L, -1, "GlobalEvent");
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaGlobalEventType(lua_State* L)
-{
-	// globalevent:type(callback)
-	GlobalEvent* global = tfs::lua::getUserdata<GlobalEvent>(L, 1);
-	if (global) {
-		std::string typeName = tfs::lua::getString(L, 2);
-		std::string tmpStr = boost::algorithm::to_lower_copy(typeName);
-		if (tmpStr == "startup") {
-			global->setEventType(GLOBALEVENT_STARTUP);
-		} else if (tmpStr == "shutdown") {
-			global->setEventType(GLOBALEVENT_SHUTDOWN);
-		} else if (tmpStr == "record") {
-			global->setEventType(GLOBALEVENT_RECORD);
-		} else {
-			std::cout << "[Error - CreatureEvent::configureLuaEvent] Invalid type for global event: " << typeName
-			          << std::endl;
-			tfs::lua::pushBoolean(L, false);
-		}
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaGlobalEventRegister(lua_State* L)
-{
-	// globalevent:register()
-	GlobalEvent* globalevent = tfs::lua::getUserdata<GlobalEvent>(L, 1);
-	if (globalevent) {
-		if (!globalevent->isScripted()) {
-			tfs::lua::pushBoolean(L, false);
-			return 1;
-		}
-
-		if (globalevent->getEventType() == GLOBALEVENT_NONE && globalevent->getInterval() == 0) {
-			std::cout << "[Error - luaGlobalEventRegister] No interval for globalevent with name "
-			          << globalevent->getName() << std::endl;
-			tfs::lua::pushBoolean(L, false);
-			return 1;
-		}
-
-		tfs::lua::pushBoolean(L, g_globalEvents->registerLuaEvent(globalevent));
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaGlobalEventOnCallback(lua_State* L)
-{
-	// globalevent:onThink / record / etc. (callback)
-	GlobalEvent* globalevent = tfs::lua::getUserdata<GlobalEvent>(L, 1);
-	if (globalevent) {
-		if (!globalevent->loadCallback()) {
-			tfs::lua::pushBoolean(L, false);
-			return 1;
-		}
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaGlobalEventTime(lua_State* L)
-{
-	// globalevent:time(time)
-	GlobalEvent* globalevent = tfs::lua::getUserdata<GlobalEvent>(L, 1);
-	if (globalevent) {
-		std::string timer = tfs::lua::getString(L, 2);
-		std::vector<int32_t> params = vectorAtoi(explodeString(timer, ":"));
-
-		int32_t hour = params.front();
-		if (hour < 0 || hour > 23) {
-			std::cout << "[Error - GlobalEvent::configureEvent] Invalid hour \"" << timer
-			          << "\" for globalevent with name: " << globalevent->getName() << std::endl;
-			tfs::lua::pushBoolean(L, false);
-			return 1;
-		}
-
-		globalevent->setInterval(hour << 16);
-
-		int32_t min = 0;
-		int32_t sec = 0;
-		if (params.size() > 1) {
-			min = params[1];
-			if (min < 0 || min > 59) {
-				std::cout << "[Error - GlobalEvent::configureEvent] Invalid minute \"" << timer
-				          << "\" for globalevent with name: " << globalevent->getName() << std::endl;
-				tfs::lua::pushBoolean(L, false);
-				return 1;
-			}
-
-			if (params.size() > 2) {
-				sec = params[2];
-				if (sec < 0 || sec > 59) {
-					std::cout << "[Error - GlobalEvent::configureEvent] Invalid second \"" << timer
-					          << "\" for globalevent with name: " << globalevent->getName() << std::endl;
-					tfs::lua::pushBoolean(L, false);
-					return 1;
-				}
-			}
-		}
-
-		time_t current_time = time(nullptr);
-		tm* timeinfo = localtime(&current_time);
-		timeinfo->tm_hour = hour;
-		timeinfo->tm_min = min;
-		timeinfo->tm_sec = sec;
-
-		time_t difference = static_cast<time_t>(difftime(mktime(timeinfo), current_time));
-		if (difference < 0) {
-			difference += 86400;
-		}
-
-		globalevent->setNextExecution(current_time + difference);
-		globalevent->setEventType(GLOBALEVENT_TIMER);
-		tfs::lua::pushBoolean(L, true);
-	} else {
-		lua_pushnil(L);
-	}
-	return 1;
-}
-
-int luaGlobalEventInterval(lua_State* L)
-{
-	// globalevent:interval(interval)
-	GlobalEvent* globalevent = tfs::lua::getUserdata<GlobalEvent>(L, 1);
-	if (globalevent) {
-		globalevent->setInterval(tfs::lua::getNumber<uint32_t>(L, 2));
-		globalevent->setNextExecution(OTSYS_TIME() + tfs::lua::getNumber<uint32_t>(L, 2));
 		tfs::lua::pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
@@ -15477,53 +11892,10 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("Position", "sendDistanceEffect", luaPositionSendDistanceEffect);
 
 	// Tile
-	registerClass("Tile", "", luaTileCreate);
-	registerMetaMethod("Tile", "__eq", luaUserdataCompare);
-
-	registerMethod("Tile", "remove", luaTileRemove);
-
-	registerMethod("Tile", "getPosition", luaTileGetPosition);
-	registerMethod("Tile", "getGround", luaTileGetGround);
-	registerMethod("Tile", "getThing", luaTileGetThing);
-	registerMethod("Tile", "getThingCount", luaTileGetThingCount);
-	registerMethod("Tile", "getTopVisibleThing", luaTileGetTopVisibleThing);
-
-	registerMethod("Tile", "getTopTopItem", luaTileGetTopTopItem);
-	registerMethod("Tile", "getTopDownItem", luaTileGetTopDownItem);
-	registerMethod("Tile", "getFieldItem", luaTileGetFieldItem);
-
-	registerMethod("Tile", "getItemById", luaTileGetItemById);
-	registerMethod("Tile", "getItemByType", luaTileGetItemByType);
-	registerMethod("Tile", "getItemByTopOrder", luaTileGetItemByTopOrder);
-	registerMethod("Tile", "getItemCountById", luaTileGetItemCountById);
-
-	registerMethod("Tile", "getBottomCreature", luaTileGetBottomCreature);
-	registerMethod("Tile", "getTopCreature", luaTileGetTopCreature);
-	registerMethod("Tile", "getBottomVisibleCreature", luaTileGetBottomVisibleCreature);
-	registerMethod("Tile", "getTopVisibleCreature", luaTileGetTopVisibleCreature);
-
-	registerMethod("Tile", "getItems", luaTileGetItems);
-	registerMethod("Tile", "getItemCount", luaTileGetItemCount);
-	registerMethod("Tile", "getDownItemCount", luaTileGetDownItemCount);
-	registerMethod("Tile", "getTopItemCount", luaTileGetTopItemCount);
-
-	registerMethod("Tile", "getCreatures", luaTileGetCreatures);
-	registerMethod("Tile", "getCreatureCount", luaTileGetCreatureCount);
-
-	registerMethod("Tile", "getThingIndex", luaTileGetThingIndex);
-
-	registerMethod("Tile", "hasProperty", luaTileHasProperty);
-	registerMethod("Tile", "hasFlag", luaTileHasFlag);
-
-	registerMethod("Tile", "queryAdd", luaTileQueryAdd);
-	registerMethod("Tile", "addItem", luaTileAddItem);
-	registerMethod("Tile", "addItemEx", luaTileAddItemEx);
-
-	registerMethod("Tile", "getHouse", luaTileGetHouse);
 
 	// NetworkMessage
 	registerClass("NetworkMessage", "", luaNetworkMessageCreate);
-	registerMetaMethod("NetworkMessage", "__eq", luaUserdataCompare);
+	registerMetaMethod("NetworkMessage", "__eq", tfs::lua::luaUserdataCompare);
 	registerMetaMethod("NetworkMessage", "__gc", luaNetworkMessageDelete);
 	registerMethod("NetworkMessage", "delete", luaNetworkMessageDelete);
 
@@ -15553,7 +11925,7 @@ void LuaScriptInterface::registerFunctions()
 
 	// ModalWindow
 	registerClass("ModalWindow", "", luaModalWindowCreate);
-	registerMetaMethod("ModalWindow", "__eq", luaUserdataCompare);
+	registerMetaMethod("ModalWindow", "__eq", tfs::lua::luaUserdataCompare);
 	registerMetaMethod("ModalWindow", "__gc", luaModalWindowDelete);
 	registerMethod("ModalWindow", "delete", luaModalWindowDelete);
 
@@ -15583,7 +11955,7 @@ void LuaScriptInterface::registerFunctions()
 
 	// Item
 	registerClass("Item", "", luaItemCreate);
-	registerMetaMethod("Item", "__eq", luaUserdataCompare);
+	registerMetaMethod("Item", "__eq", tfs::lua::luaUserdataCompare);
 
 	registerMethod("Item", "isItem", luaItemIsItem);
 
@@ -15643,7 +12015,7 @@ void LuaScriptInterface::registerFunctions()
 
 	// Container
 	registerClass("Container", "Item", luaContainerCreate);
-	registerMetaMethod("Container", "__eq", luaUserdataCompare);
+	registerMetaMethod("Container", "__eq", tfs::lua::luaUserdataCompare);
 
 	registerMethod("Container", "getSize", luaContainerGetSize);
 	registerMethod("Container", "getCapacity", luaContainerGetCapacity);
@@ -15660,14 +12032,14 @@ void LuaScriptInterface::registerFunctions()
 
 	// Teleport
 	registerClass("Teleport", "Item", luaTeleportCreate);
-	registerMetaMethod("Teleport", "__eq", luaUserdataCompare);
+	registerMetaMethod("Teleport", "__eq", tfs::lua::luaUserdataCompare);
 
 	registerMethod("Teleport", "getDestination", luaTeleportGetDestination);
 	registerMethod("Teleport", "setDestination", luaTeleportSetDestination);
 
 	// Podium
 	registerClass("Podium", "Item", luaPodiumCreate);
-	registerMetaMethod("Podium", "__eq", luaUserdataCompare);
+	registerMetaMethod("Podium", "__eq", tfs::lua::luaUserdataCompare);
 
 	registerMethod("Podium", "getOutfit", luaPodiumGetOutfit);
 	registerMethod("Podium", "setOutfit", luaPodiumSetOutfit);
@@ -15678,7 +12050,7 @@ void LuaScriptInterface::registerFunctions()
 
 	// Creature
 	registerClass("Creature", "", luaCreatureCreate);
-	registerMetaMethod("Creature", "__eq", luaUserdataCompare);
+	registerMetaMethod("Creature", "__eq", tfs::lua::luaUserdataCompare);
 
 	registerMethod("Creature", "getEvents", luaCreatureGetEvents);
 	registerMethod("Creature", "registerEvent", luaCreatureRegisterEvent);
@@ -15760,188 +12132,10 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("Creature", "getZone", luaCreatureGetZone);
 
 	// Player
-	registerClass("Player", "Creature", luaPlayerCreate);
-	registerMetaMethod("Player", "__eq", luaUserdataCompare);
-
-	registerMethod("Player", "isPlayer", luaPlayerIsPlayer);
-
-	registerMethod("Player", "getGuid", luaPlayerGetGuid);
-	registerMethod("Player", "getIp", luaPlayerGetIp);
-	registerMethod("Player", "getAccountId", luaPlayerGetAccountId);
-	registerMethod("Player", "getLastLoginSaved", luaPlayerGetLastLoginSaved);
-	registerMethod("Player", "getLastLogout", luaPlayerGetLastLogout);
-
-	registerMethod("Player", "getAccountType", luaPlayerGetAccountType);
-	registerMethod("Player", "setAccountType", luaPlayerSetAccountType);
-
-	registerMethod("Player", "getCapacity", luaPlayerGetCapacity);
-	registerMethod("Player", "setCapacity", luaPlayerSetCapacity);
-
-	registerMethod("Player", "getFreeCapacity", luaPlayerGetFreeCapacity);
-
-	registerMethod("Player", "getDepotChest", luaPlayerGetDepotChest);
-	registerMethod("Player", "getInbox", luaPlayerGetInbox);
-
-	registerMethod("Player", "getSkullTime", luaPlayerGetSkullTime);
-	registerMethod("Player", "setSkullTime", luaPlayerSetSkullTime);
-	registerMethod("Player", "getDeathPenalty", luaPlayerGetDeathPenalty);
-
-	registerMethod("Player", "getExperience", luaPlayerGetExperience);
-	registerMethod("Player", "addExperience", luaPlayerAddExperience);
-	registerMethod("Player", "removeExperience", luaPlayerRemoveExperience);
-	registerMethod("Player", "getLevel", luaPlayerGetLevel);
-
-	registerMethod("Player", "getMagicLevel", luaPlayerGetMagicLevel);
-	registerMethod("Player", "getBaseMagicLevel", luaPlayerGetBaseMagicLevel);
-	registerMethod("Player", "getMana", luaPlayerGetMana);
-	registerMethod("Player", "addMana", luaPlayerAddMana);
-	registerMethod("Player", "getMaxMana", luaPlayerGetMaxMana);
-	registerMethod("Player", "setMaxMana", luaPlayerSetMaxMana);
-	registerMethod("Player", "getManaSpent", luaPlayerGetManaSpent);
-	registerMethod("Player", "addManaSpent", luaPlayerAddManaSpent);
-	registerMethod("Player", "removeManaSpent", luaPlayerRemoveManaSpent);
-
-	registerMethod("Player", "getBaseMaxHealth", luaPlayerGetBaseMaxHealth);
-	registerMethod("Player", "getBaseMaxMana", luaPlayerGetBaseMaxMana);
-
-	registerMethod("Player", "getSkillLevel", luaPlayerGetSkillLevel);
-	registerMethod("Player", "getEffectiveSkillLevel", luaPlayerGetEffectiveSkillLevel);
-	registerMethod("Player", "getSkillPercent", luaPlayerGetSkillPercent);
-	registerMethod("Player", "getSkillTries", luaPlayerGetSkillTries);
-	registerMethod("Player", "addSkillTries", luaPlayerAddSkillTries);
-	registerMethod("Player", "removeSkillTries", luaPlayerRemoveSkillTries);
-	registerMethod("Player", "getSpecialSkill", luaPlayerGetSpecialSkill);
-	registerMethod("Player", "addSpecialSkill", luaPlayerAddSpecialSkill);
-
-	registerMethod("Player", "addOfflineTrainingTime", luaPlayerAddOfflineTrainingTime);
-	registerMethod("Player", "getOfflineTrainingTime", luaPlayerGetOfflineTrainingTime);
-	registerMethod("Player", "removeOfflineTrainingTime", luaPlayerRemoveOfflineTrainingTime);
-
-	registerMethod("Player", "addOfflineTrainingTries", luaPlayerAddOfflineTrainingTries);
-
-	registerMethod("Player", "getOfflineTrainingSkill", luaPlayerGetOfflineTrainingSkill);
-	registerMethod("Player", "setOfflineTrainingSkill", luaPlayerSetOfflineTrainingSkill);
-
-	registerMethod("Player", "getItemCount", luaPlayerGetItemCount);
-	registerMethod("Player", "getItemById", luaPlayerGetItemById);
-
-	registerMethod("Player", "getVocation", luaPlayerGetVocation);
-	registerMethod("Player", "setVocation", luaPlayerSetVocation);
-
-	registerMethod("Player", "getSex", luaPlayerGetSex);
-	registerMethod("Player", "setSex", luaPlayerSetSex);
-
-	registerMethod("Player", "getTown", luaPlayerGetTown);
-	registerMethod("Player", "setTown", luaPlayerSetTown);
-
-	registerMethod("Player", "getGuild", luaPlayerGetGuild);
-	registerMethod("Player", "setGuild", luaPlayerSetGuild);
-
-	registerMethod("Player", "getGuildLevel", luaPlayerGetGuildLevel);
-	registerMethod("Player", "setGuildLevel", luaPlayerSetGuildLevel);
-
-	registerMethod("Player", "getGuildNick", luaPlayerGetGuildNick);
-	registerMethod("Player", "setGuildNick", luaPlayerSetGuildNick);
-
-	registerMethod("Player", "getGroup", luaPlayerGetGroup);
-	registerMethod("Player", "setGroup", luaPlayerSetGroup);
-
-	registerMethod("Player", "getStamina", luaPlayerGetStamina);
-	registerMethod("Player", "setStamina", luaPlayerSetStamina);
-
-	registerMethod("Player", "getSoul", luaPlayerGetSoul);
-	registerMethod("Player", "addSoul", luaPlayerAddSoul);
-	registerMethod("Player", "getMaxSoul", luaPlayerGetMaxSoul);
-
-	registerMethod("Player", "getBankBalance", luaPlayerGetBankBalance);
-	registerMethod("Player", "setBankBalance", luaPlayerSetBankBalance);
-
-	registerMethod("Player", "getStorageValue", luaPlayerGetStorageValue);
-	registerMethod("Player", "setStorageValue", luaPlayerSetStorageValue);
-
-	registerMethod("Player", "addItem", luaPlayerAddItem);
-	registerMethod("Player", "addItemEx", luaPlayerAddItemEx);
-	registerMethod("Player", "removeItem", luaPlayerRemoveItem);
-	registerMethod("Player", "sendSupplyUsed", luaPlayerSendSupplyUsed);
-
-	registerMethod("Player", "getMoney", luaPlayerGetMoney);
-	registerMethod("Player", "addMoney", luaPlayerAddMoney);
-	registerMethod("Player", "removeMoney", luaPlayerRemoveMoney);
-
-	registerMethod("Player", "showTextDialog", luaPlayerShowTextDialog);
-
-	registerMethod("Player", "sendTextMessage", luaPlayerSendTextMessage);
-	registerMethod("Player", "sendChannelMessage", luaPlayerSendChannelMessage);
-	registerMethod("Player", "sendPrivateMessage", luaPlayerSendPrivateMessage);
-	registerMethod("Player", "channelSay", luaPlayerChannelSay);
-	registerMethod("Player", "openChannel", luaPlayerOpenChannel);
-
-	registerMethod("Player", "getSlotItem", luaPlayerGetSlotItem);
-
-	registerMethod("Player", "getParty", luaPlayerGetParty);
-
-	registerMethod("Player", "addOutfit", luaPlayerAddOutfit);
-	registerMethod("Player", "addOutfitAddon", luaPlayerAddOutfitAddon);
-	registerMethod("Player", "removeOutfit", luaPlayerRemoveOutfit);
-	registerMethod("Player", "removeOutfitAddon", luaPlayerRemoveOutfitAddon);
-	registerMethod("Player", "hasOutfit", luaPlayerHasOutfit);
-	registerMethod("Player", "canWearOutfit", luaPlayerCanWearOutfit);
-	registerMethod("Player", "sendOutfitWindow", luaPlayerSendOutfitWindow);
-
-	registerMethod("Player", "sendEditPodium", luaPlayerSendEditPodium);
-
-	registerMethod("Player", "addMount", luaPlayerAddMount);
-	registerMethod("Player", "removeMount", luaPlayerRemoveMount);
-	registerMethod("Player", "hasMount", luaPlayerHasMount);
-
-	registerMethod("Player", "getPremiumEndsAt", luaPlayerGetPremiumEndsAt);
-	registerMethod("Player", "setPremiumEndsAt", luaPlayerSetPremiumEndsAt);
-
-	registerMethod("Player", "hasBlessing", luaPlayerHasBlessing);
-	registerMethod("Player", "addBlessing", luaPlayerAddBlessing);
-	registerMethod("Player", "removeBlessing", luaPlayerRemoveBlessing);
-
-	registerMethod("Player", "canLearnSpell", luaPlayerCanLearnSpell);
-	registerMethod("Player", "learnSpell", luaPlayerLearnSpell);
-	registerMethod("Player", "forgetSpell", luaPlayerForgetSpell);
-	registerMethod("Player", "hasLearnedSpell", luaPlayerHasLearnedSpell);
-
-	registerMethod("Player", "sendTutorial", luaPlayerSendTutorial);
-	registerMethod("Player", "addMapMark", luaPlayerAddMapMark);
-
-	registerMethod("Player", "save", luaPlayerSave);
-	registerMethod("Player", "popupFYI", luaPlayerPopupFYI);
-
-	registerMethod("Player", "isPzLocked", luaPlayerIsPzLocked);
-
-	registerMethod("Player", "getClient", luaPlayerGetClient);
-
-	registerMethod("Player", "getHouse", luaPlayerGetHouse);
-	registerMethod("Player", "sendHouseWindow", luaPlayerSendHouseWindow);
-	registerMethod("Player", "setEditHouse", luaPlayerSetEditHouse);
-
-	registerMethod("Player", "setGhostMode", luaPlayerSetGhostMode);
-
-	registerMethod("Player", "getContainerId", luaPlayerGetContainerId);
-	registerMethod("Player", "getContainerById", luaPlayerGetContainerById);
-	registerMethod("Player", "getContainerIndex", luaPlayerGetContainerIndex);
-
-	registerMethod("Player", "getInstantSpells", luaPlayerGetInstantSpells);
-	registerMethod("Player", "canCast", luaPlayerCanCast);
-
-	registerMethod("Player", "hasChaseMode", luaPlayerHasChaseMode);
-	registerMethod("Player", "hasSecureMode", luaPlayerHasSecureMode);
-	registerMethod("Player", "getFightMode", luaPlayerGetFightMode);
-
-	registerMethod("Player", "getStoreInbox", luaPlayerGetStoreInbox);
-
-	registerMethod("Player", "isNearDepotBox", luaPlayerIsNearDepotBox);
-
-	registerMethod("Player", "getIdleTime", luaPlayerGetIdleTime);
 
 	// Monster
 	registerClass("Monster", "Creature", luaMonsterCreate);
-	registerMetaMethod("Monster", "__eq", luaUserdataCompare);
+	registerMetaMethod("Monster", "__eq", tfs::lua::luaUserdataCompare);
 
 	registerMethod("Monster", "isMonster", luaMonsterIsMonster);
 
@@ -15977,7 +12171,7 @@ void LuaScriptInterface::registerFunctions()
 
 	// Npc
 	registerClass("Npc", "Creature", luaNpcCreate);
-	registerMetaMethod("Npc", "__eq", luaUserdataCompare);
+	registerMetaMethod("Npc", "__eq", tfs::lua::luaUserdataCompare);
 
 	registerMethod("Npc", "isNpc", luaNpcIsNpc);
 
@@ -15988,7 +12182,7 @@ void LuaScriptInterface::registerFunctions()
 
 	// Guild
 	registerClass("Guild", "", luaGuildCreate);
-	registerMetaMethod("Guild", "__eq", luaUserdataCompare);
+	registerMetaMethod("Guild", "__eq", tfs::lua::luaUserdataCompare);
 
 	registerMethod("Guild", "getId", luaGuildGetId);
 	registerMethod("Guild", "getName", luaGuildGetName);
@@ -16003,7 +12197,7 @@ void LuaScriptInterface::registerFunctions()
 
 	// Group
 	registerClass("Group", "", luaGroupCreate);
-	registerMetaMethod("Group", "__eq", luaUserdataCompare);
+	registerMetaMethod("Group", "__eq", tfs::lua::luaUserdataCompare);
 
 	registerMethod("Group", "getId", luaGroupGetId);
 	registerMethod("Group", "getName", luaGroupGetName);
@@ -16015,7 +12209,7 @@ void LuaScriptInterface::registerFunctions()
 
 	// Vocation
 	registerClass("Vocation", "", luaVocationCreate);
-	registerMetaMethod("Vocation", "__eq", luaUserdataCompare);
+	registerMetaMethod("Vocation", "__eq", tfs::lua::luaUserdataCompare);
 
 	registerMethod("Vocation", "getId", luaVocationGetId);
 	registerMethod("Vocation", "getClientId", luaVocationGetClientId);
@@ -16048,7 +12242,7 @@ void LuaScriptInterface::registerFunctions()
 
 	// Town
 	registerClass("Town", "", luaTownCreate);
-	registerMetaMethod("Town", "__eq", luaUserdataCompare);
+	registerMetaMethod("Town", "__eq", tfs::lua::luaUserdataCompare);
 
 	registerMethod("Town", "getId", luaTownGetId);
 	registerMethod("Town", "getName", luaTownGetName);
@@ -16056,7 +12250,7 @@ void LuaScriptInterface::registerFunctions()
 
 	// House
 	registerClass("House", "", luaHouseCreate);
-	registerMetaMethod("House", "__eq", luaUserdataCompare);
+	registerMetaMethod("House", "__eq", tfs::lua::luaUserdataCompare);
 
 	registerMethod("House", "getId", luaHouseGetId);
 	registerMethod("House", "getName", luaHouseGetName);
@@ -16098,7 +12292,7 @@ void LuaScriptInterface::registerFunctions()
 
 	// ItemType
 	registerClass("ItemType", "", luaItemTypeCreate);
-	registerMetaMethod("ItemType", "__eq", luaUserdataCompare);
+	registerMetaMethod("ItemType", "__eq", tfs::lua::luaUserdataCompare);
 
 	registerMethod("ItemType", "isCorpse", luaItemTypeIsCorpse);
 	registerMethod("ItemType", "isDoor", luaItemTypeIsDoor);
@@ -16176,7 +12370,7 @@ void LuaScriptInterface::registerFunctions()
 
 	// Combat
 	registerClass("Combat", "", luaCombatCreate);
-	registerMetaMethod("Combat", "__eq", luaUserdataCompare);
+	registerMetaMethod("Combat", "__eq", tfs::lua::luaUserdataCompare);
 	registerMetaMethod("Combat", "__gc", luaCombatDelete);
 	registerMethod("Combat", "delete", luaCombatDelete);
 
@@ -16195,7 +12389,7 @@ void LuaScriptInterface::registerFunctions()
 
 	// Condition
 	registerClass("Condition", "", luaConditionCreate);
-	registerMetaMethod("Condition", "__eq", luaUserdataCompare);
+	registerMetaMethod("Condition", "__eq", tfs::lua::luaUserdataCompare);
 	registerMetaMethod("Condition", "__gc", luaConditionDelete);
 
 	registerMethod("Condition", "getId", luaConditionGetId);
@@ -16223,7 +12417,7 @@ void LuaScriptInterface::registerFunctions()
 
 	// MonsterType
 	registerClass("MonsterType", "", luaMonsterTypeCreate);
-	registerMetaMethod("MonsterType", "__eq", luaUserdataCompare);
+	registerMetaMethod("MonsterType", "__eq", tfs::lua::luaUserdataCompare);
 
 	registerMethod("MonsterType", "isAttackable", luaMonsterTypeIsAttackable);
 	registerMethod("MonsterType", "isChallengeable", luaMonsterTypeIsChallengeable);
@@ -16345,7 +12539,7 @@ void LuaScriptInterface::registerFunctions()
 
 	// Party
 	registerClass("Party", "", luaPartyCreate);
-	registerMetaMethod("Party", "__eq", luaUserdataCompare);
+	registerMetaMethod("Party", "__eq", tfs::lua::luaUserdataCompare);
 
 	registerMethod("Party", "disband", luaPartyDisband);
 
@@ -16371,7 +12565,7 @@ void LuaScriptInterface::registerFunctions()
 
 	// Spells
 	registerClass("Spell", "", luaSpellCreate);
-	registerMetaMethod("Spell", "__eq", luaUserdataCompare);
+	registerMetaMethod("Spell", "__eq", tfs::lua::luaUserdataCompare);
 
 	registerMethod("Spell", "onCastSpell", luaSpellOnCastSpell);
 	registerMethod("Spell", "register", luaSpellRegister);
@@ -16426,62 +12620,8 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("Action", "checkFloor", luaActionCheckFloor);
 
 	// TalkAction
-	registerClass("TalkAction", "", luaCreateTalkaction);
-	registerMethod("TalkAction", "onSay", luaTalkactionOnSay);
-	registerMethod("TalkAction", "register", luaTalkactionRegister);
-	registerMethod("TalkAction", "separator", luaTalkactionSeparator);
-	registerMethod("TalkAction", "access", luaTalkactionAccess);
-	registerMethod("TalkAction", "accountType", luaTalkactionAccountType);
-
-	// CreatureEvent
-	registerClass("CreatureEvent", "", luaCreateCreatureEvent);
-	registerMethod("CreatureEvent", "type", luaCreatureEventType);
-	registerMethod("CreatureEvent", "register", luaCreatureEventRegister);
-	registerMethod("CreatureEvent", "onLogin", luaCreatureEventOnCallback);
-	registerMethod("CreatureEvent", "onLogout", luaCreatureEventOnCallback);
-	registerMethod("CreatureEvent", "onThink", luaCreatureEventOnCallback);
-	registerMethod("CreatureEvent", "onPrepareDeath", luaCreatureEventOnCallback);
-	registerMethod("CreatureEvent", "onDeath", luaCreatureEventOnCallback);
-	registerMethod("CreatureEvent", "onKill", luaCreatureEventOnCallback);
-	registerMethod("CreatureEvent", "onAdvance", luaCreatureEventOnCallback);
-	registerMethod("CreatureEvent", "onModalWindow", luaCreatureEventOnCallback);
-	registerMethod("CreatureEvent", "onTextEdit", luaCreatureEventOnCallback);
-	registerMethod("CreatureEvent", "onHealthChange", luaCreatureEventOnCallback);
-	registerMethod("CreatureEvent", "onManaChange", luaCreatureEventOnCallback);
-	registerMethod("CreatureEvent", "onExtendedOpcode", luaCreatureEventOnCallback);
 
 	// MoveEvent
-	registerClass("MoveEvent", "", luaCreateMoveEvent);
-	registerMethod("MoveEvent", "type", luaMoveEventType);
-	registerMethod("MoveEvent", "register", luaMoveEventRegister);
-	registerMethod("MoveEvent", "level", luaMoveEventLevel);
-	registerMethod("MoveEvent", "magicLevel", luaMoveEventMagLevel);
-	registerMethod("MoveEvent", "slot", luaMoveEventSlot);
-	registerMethod("MoveEvent", "id", luaMoveEventItemId);
-	registerMethod("MoveEvent", "aid", luaMoveEventActionId);
-	registerMethod("MoveEvent", "uid", luaMoveEventUniqueId);
-	registerMethod("MoveEvent", "position", luaMoveEventPosition);
-	registerMethod("MoveEvent", "premium", luaMoveEventPremium);
-	registerMethod("MoveEvent", "vocation", luaMoveEventVocation);
-	registerMethod("MoveEvent", "tileItem", luaMoveEventTileItem);
-	registerMethod("MoveEvent", "onEquip", luaMoveEventOnCallback);
-	registerMethod("MoveEvent", "onDeEquip", luaMoveEventOnCallback);
-	registerMethod("MoveEvent", "onStepIn", luaMoveEventOnCallback);
-	registerMethod("MoveEvent", "onStepOut", luaMoveEventOnCallback);
-	registerMethod("MoveEvent", "onAddItem", luaMoveEventOnCallback);
-	registerMethod("MoveEvent", "onRemoveItem", luaMoveEventOnCallback);
-
-	// GlobalEvent
-	registerClass("GlobalEvent", "", luaCreateGlobalEvent);
-	registerMethod("GlobalEvent", "type", luaGlobalEventType);
-	registerMethod("GlobalEvent", "register", luaGlobalEventRegister);
-	registerMethod("GlobalEvent", "time", luaGlobalEventTime);
-	registerMethod("GlobalEvent", "interval", luaGlobalEventInterval);
-	registerMethod("GlobalEvent", "onThink", luaGlobalEventOnCallback);
-	registerMethod("GlobalEvent", "onTime", luaGlobalEventOnCallback);
-	registerMethod("GlobalEvent", "onStartup", luaGlobalEventOnCallback);
-	registerMethod("GlobalEvent", "onShutdown", luaGlobalEventOnCallback);
-	registerMethod("GlobalEvent", "onRecord", luaGlobalEventOnCallback);
 
 	tfs::lua::importModules(*this);
 }

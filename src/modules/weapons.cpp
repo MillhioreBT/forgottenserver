@@ -1,11 +1,12 @@
 #include "../otpch.h"
 
+#include "../weapons.h"
+
 #include "../luaapi.h"
 #include "../luaenv.h"
 #include "../luameta.h"
 #include "../luascript.h"
 #include "../script.h"
-#include "../weapons.h"
 #include "luaregister.h"
 
 extern Scripts* g_scripts;
@@ -642,9 +643,7 @@ int luaWeaponExtraElement(lua_State* L)
 	return 1;
 }
 
-} // namespace
-
-void registerWeaponModule(LuaScriptInterface& lsi)
+void registerFunctions(LuaScriptInterface& lsi)
 {
 	lsi.registerClass("Weapon", "", luaCreateWeapon);
 	lsi.registerMethod("Weapon", "action", luaWeaponAction);
@@ -685,4 +684,7 @@ void registerWeaponModule(LuaScriptInterface& lsi)
 	// exclusively for wands & distance weapons
 	lsi.registerMethod("Weapon", "shootType", luaWeaponShootType);
 }
-registerLuaModule(registerWeaponModule);
+
+} // namespace
+
+registerLuaModule("weapons", registerFunctions);

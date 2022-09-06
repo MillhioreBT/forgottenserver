@@ -20,6 +20,15 @@ extern Spells* g_spells;
 
 namespace tfs::lua {
 
+bool isNumber(lua_State* L, int32_t arg) { return lua_type(L, arg) == LUA_TNUMBER; }
+
+int luaUserdataCompare(lua_State* L)
+{
+	// userdataA == userdataB
+	tfs::lua::pushBoolean(L, tfs::lua::getUserdata<void>(L, 1) == tfs::lua::getUserdata<void>(L, 2));
+	return 1;
+}
+
 bool getBoolean(lua_State* L, int32_t arg) { return lua_toboolean(L, arg) != 0; }
 
 bool getBoolean(lua_State* L, int32_t arg, bool defaultValue)

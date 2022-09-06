@@ -7,12 +7,10 @@
 
 #include "combat.h"
 #include "configmanager.h"
-#include "game.h"
 #include "pugicast.h"
 #include "spells.h"
 #include "weapons.h"
 
-extern Game* g_game;
 extern Spells* g_spells;
 extern Monsters g_monsters;
 extern ConfigManager g_config;

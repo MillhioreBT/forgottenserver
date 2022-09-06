@@ -6,14 +6,18 @@ namespace tfs::lua {
 
 using ModuleInit = std::function<void(LuaScriptInterface&)>;
 
-static std::vector<ModuleInit> modules = {};
+static auto& getModules()
+{
+	static std::vector<std::pair<std::string_view, ModuleInit>> modules;
+	return modules;
+};
 
-void registerModule(ModuleInit init) { modules.push_back(init); }
+void registerModule(std::string_view moduleName, ModuleInit init) { getModules().emplace_back(moduleName, init); }
 
 void importModules(LuaScriptInterface& lsi)
 {
-	for (auto module : modules) {
-		module(lsi);
+	for (auto [moduleName, init] : getModules()) {
+		init(lsi);
 	}
 }
 

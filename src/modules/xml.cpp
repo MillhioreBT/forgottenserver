@@ -152,9 +152,7 @@ int luaXmlNodeNextSibling(lua_State* L)
 	return 1;
 }
 
-} // namespace
-
-void registerXmlModule(LuaScriptInterface& lsi)
+void registerFunctions(LuaScriptInterface& lsi)
 {
 	// XML
 	lsi.registerClass("XMLDocument", "", luaCreateXmlDocument);
@@ -173,4 +171,6 @@ void registerXmlModule(LuaScriptInterface& lsi)
 	lsi.registerMethod("XMLNode", "nextSibling", luaXmlNodeNextSibling);
 };
 
-registerLuaModule(registerXmlModule);
+} // namespace
+
+registerLuaModule("xml", registerFunctions);

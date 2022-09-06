@@ -6,7 +6,6 @@
 
 #include "configmanager.h"
 
-#include "game.h"
 #include "luaapi.h"
 #include "monster.h"
 #include "pugicast.h"
@@ -15,8 +14,6 @@
 #undef lua_strlen
 #define lua_strlen lua_rawlen
 #endif
-
-extern Game* g_game;
 
 namespace {
 

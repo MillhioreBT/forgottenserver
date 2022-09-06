@@ -70,6 +70,8 @@ inline T getNumber(lua_State* L, int32_t arg, T defaultValue)
 	return getNumber<T>(L, arg);
 }
 
+bool isNumber(lua_State* L, int32_t arg);
+
 template <class T>
 inline T** getRawUserdata(lua_State* L, int32_t arg)
 {
@@ -92,6 +94,8 @@ inline void pushUserdata(lua_State* L, T* value)
 	T** userdata = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
 	*userdata = value;
 }
+
+int luaUserdataCompare(lua_State* L);
 
 template <class T>
 inline std::shared_ptr<T>& getSharedPtr(lua_State* L, int32_t arg)
