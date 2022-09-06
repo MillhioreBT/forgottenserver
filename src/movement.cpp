@@ -12,7 +12,7 @@
 #include "luameta.h"
 #include "pugicast.h"
 
-extern Game g_game;
+extern Game* g_game;
 extern Vocations g_vocations;
 
 MoveEvents::MoveEvents() : scriptInterface("MoveEvents Interface") { scriptInterface.initState(); }
@@ -734,8 +734,8 @@ ReturnValue MoveEvent::EquipItem(MoveEvent* moveEvent, Player* player, Item* ite
 
 	const ItemType& it = Item::items[item->getID()];
 	if (it.transformEquipTo != 0) {
-		Item* newItem = g_game.transformItem(item, it.transformEquipTo);
-		g_game.startDecay(newItem);
+		Item* newItem = g_game->transformItem(item, it.transformEquipTo);
+		g_game->startDecay(newItem);
 	} else {
 		player->setItemAbility(slot, true);
 	}
@@ -756,7 +756,7 @@ ReturnValue MoveEvent::EquipItem(MoveEvent* moveEvent, Player* player, Item* ite
 	}
 
 	if (it.abilities->speed != 0) {
-		g_game.changeSpeed(player, it.abilities->speed);
+		g_game->changeSpeed(player, it.abilities->speed);
 	}
 
 	if (it.abilities->conditionSuppressions != 0) {
@@ -849,8 +849,8 @@ ReturnValue MoveEvent::DeEquipItem(MoveEvent*, Player* player, Item* item, slots
 
 	const ItemType& it = Item::items[item->getID()];
 	if (it.transformDeEquipTo != 0) {
-		g_game.transformItem(item, it.transformDeEquipTo);
-		g_game.startDecay(item);
+		g_game->transformItem(item, it.transformDeEquipTo);
+		g_game->startDecay(item);
 	}
 
 	if (!it.abilities) {
@@ -866,7 +866,7 @@ ReturnValue MoveEvent::DeEquipItem(MoveEvent*, Player* player, Item* item, slots
 	}
 
 	if (it.abilities->speed != 0) {
-		g_game.changeSpeed(player, -it.abilities->speed);
+		g_game->changeSpeed(player, -it.abilities->speed);
 	}
 
 	if (it.abilities->conditionSuppressions != 0) {

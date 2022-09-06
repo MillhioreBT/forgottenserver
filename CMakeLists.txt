@@ -76,40 +76,40 @@ target_link_libraries(tfs PRIVATE
         ${PUGIXML_LIBRARIES}
         )
 
-### INTERPROCEDURAL_OPTIMIZATION ###
-cmake_policy(SET CMP0069 NEW)
-include(CheckIPOSupported)
-check_ipo_supported(RESULT result OUTPUT error)
-if (result)
-    message(STATUS "IPO / LTO enabled")
-    set_target_properties(tfs PROPERTIES INTERPROCEDURAL_OPTIMIZATION True)
-else ()
-    message(STATUS "IPO / LTO not supported: <${error}>")
-endif ()
-### END INTERPROCEDURAL_OPTIMIZATION ###
+# ### INTERPROCEDURAL_OPTIMIZATION ###
+# cmake_policy(SET CMP0069 NEW)
+# include(CheckIPOSupported)
+# check_ipo_supported(RESULT result OUTPUT error)
+# if (result)
+#     message(STATUS "IPO / LTO enabled")
+#     set_target_properties(tfs PROPERTIES INTERPROCEDURAL_OPTIMIZATION True)
+# else ()
+#     message(STATUS "IPO / LTO not supported: <${error}>")
+# endif ()
+# ### END INTERPROCEDURAL_OPTIMIZATION ###
 
-### Git Version ###
-# Define the two required variables before including
-# the source code for watching a git repository.
-option(SKIP_GIT "Skip checking for git updates" OFF)
-if(NOT SKIP_GIT)
-	set(PRE_CONFIGURE_FILE "cmake/gitmetadata.h.in")
-	set(POST_CONFIGURE_FILE "${CMAKE_CURRENT_BINARY_DIR}/gitmetadata.h")
-	include(git_watcher)
-	if(Git_FOUND)
-		add_dependencies(tfs check_git)
-		target_include_directories(tfs PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-	endif()
-endif()
-### END  Git Version ###
+# ### Git Version ###
+# # Define the two required variables before including
+# # the source code for watching a git repository.
+# option(SKIP_GIT "Skip checking for git updates" OFF)
+# if(NOT SKIP_GIT)
+# 	set(PRE_CONFIGURE_FILE "cmake/gitmetadata.h.in")
+# 	set(POST_CONFIGURE_FILE "${CMAKE_CURRENT_BINARY_DIR}/gitmetadata.h")
+# 	include(git_watcher)
+# 	if(Git_FOUND)
+# 		add_dependencies(tfs check_git)
+# 		target_include_directories(tfs PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+# 	endif()
+# endif()
+# ### END  Git Version ###
 
-# Precompiled header
-# note: cotire() must be called last on a target
-if (${CMAKE_VERSION} VERSION_GREATER "3.16.0")
-    target_precompile_headers(tfs PUBLIC src/otpch.h)
-else ()
-    include(cotire)
-    set_target_properties(tfs PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "src/otpch.h")
-    set_target_properties(tfs PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)
-    cotire(tfs)
-endif ()
+# # Precompiled header
+# # note: cotire() must be called last on a target
+# if (${CMAKE_VERSION} VERSION_GREATER "3.16.0")
+#     target_precompile_headers(tfs PUBLIC src/otpch.h)
+# else ()
+#     include(cotire)
+#     set_target_properties(tfs PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "src/otpch.h")
+#     set_target_properties(tfs PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)
+#     cotire(tfs)
+# endif ()

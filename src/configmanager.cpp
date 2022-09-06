@@ -16,7 +16,7 @@
 #define lua_strlen lua_rawlen
 #endif
 
-extern Game g_game;
+extern Game* g_game;
 
 namespace {
 

@@ -12,7 +12,7 @@
 #include "pugicast.h"
 #include "scheduler.h"
 
-extern Game g_game;
+extern Game* g_game;
 extern ConfigManager g_config;
 
 Raids::Raids() { scriptInterface.initState(); }
@@ -198,7 +198,7 @@ bool Raid::loadFromXml(const std::string& filename)
 		} else if (caseInsensitiveEqual(eventNode.name(), "areaspawn")) {
 			event = new AreaSpawnEvent();
 		} else if (caseInsensitiveEqual(eventNode.name(), "script")) {
-			event = new ScriptEvent(&g_game.raids.getScriptInterface());
+			event = new ScriptEvent(&g_game->raids.getScriptInterface());
 		} else {
 			continue;
 		}
@@ -253,8 +253,8 @@ void Raid::resetRaid()
 {
 	nextEvent = 0;
 	state = RAIDSTATE_IDLE;
-	g_game.raids.setRunning(nullptr);
-	g_game.raids.setLastRaidEnd(OTSYS_TIME());
+	g_game->raids.setRunning(nullptr);
+	g_game->raids.setLastRaidEnd(OTSYS_TIME());
 }
 
 void Raid::stopEvents()
@@ -328,7 +328,7 @@ bool AnnounceEvent::configureRaidEvent(const pugi::xml_node& eventNode)
 
 bool AnnounceEvent::executeEvent()
 {
-	g_game.broadcastMessage(message, messageType);
+	g_game->broadcastMessage(message, messageType);
 	return true;
 }
 
@@ -377,7 +377,7 @@ bool SingleSpawnEvent::executeEvent()
 		return false;
 	}
 
-	if (!g_game.placeCreature(monster, position, false, true)) {
+	if (!g_game->placeCreature(monster, position, false, true)) {
 		delete monster;
 		std::cout << "[Error] Raids: Cant place monster " << monsterName << std::endl;
 		return false;
@@ -520,10 +520,10 @@ bool AreaSpawnEvent::executeEvent()
 
 			bool success = false;
 			for (int32_t tries = 0; tries < MAXIMUM_TRIES_PER_MONSTER; tries++) {
-				Tile* tile = g_game.map.getTile(uniform_random(fromPos.x, toPos.x), uniform_random(fromPos.y, toPos.y),
+				Tile* tile = g_game->map.getTile(uniform_random(fromPos.x, toPos.x), uniform_random(fromPos.y, toPos.y),
 				                                uniform_random(fromPos.z, toPos.z));
 				if (tile && !tile->isMoveableBlocking() && !tile->hasFlag(TILESTATE_PROTECTIONZONE) &&
-				    !tile->getTopCreature() && g_game.placeCreature(monster, tile->getPosition(), false, true)) {
+				    !tile->getTopCreature() && g_game->placeCreature(monster, tile->getPosition(), false, true)) {
 					success = true;
 					break;
 				}

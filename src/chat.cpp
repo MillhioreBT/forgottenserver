@@ -12,7 +12,7 @@
 #include "scheduler.h"
 
 extern Chat* g_chat;
-extern Game g_game;
+extern Game* g_game;
 
 bool PrivateChatChannel::isInvited(uint32_t guid) const
 {
@@ -81,7 +81,7 @@ bool ChatChannel::addUser(Player& player)
 		Guild* guild = player.getGuild();
 		if (guild && !guild->getMotd().empty()) {
 			g_scheduler.addEvent(
-			    createSchedulerTask(150, [playerID = player.getID()]() { g_game.sendGuildMotd(playerID); }));
+			    createSchedulerTask(150, [playerID = player.getID()]() { g_game->sendGuildMotd(playerID); }));
 		}
 	}
 

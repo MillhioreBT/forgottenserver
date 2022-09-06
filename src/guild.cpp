@@ -8,7 +8,7 @@
 #include "database.h"
 #include "game.h"
 
-extern Game g_game;
+extern Game* g_game;
 
 void Guild::addMember(Player* player) { membersOnline.push_back(player); }
 
@@ -17,7 +17,7 @@ void Guild::removeMember(Player* player)
 	membersOnline.remove(player);
 
 	if (membersOnline.empty()) {
-		g_game.removeGuild(id);
+		g_game->removeGuild(id);
 		delete this;
 	}
 }

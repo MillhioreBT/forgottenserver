@@ -8,7 +8,7 @@
 #include "game.h"
 #include "outputmessage.h"
 
-extern Game g_game;
+extern Game* g_game;
 
 void ProtocolOld::disconnectClient(const std::string& message)
 {
@@ -22,7 +22,7 @@ void ProtocolOld::disconnectClient(const std::string& message)
 
 void ProtocolOld::onRecvFirstMessage(NetworkMessage& msg)
 {
-	if (g_game.getGameState() == GAME_STATE_SHUTDOWN) {
+	if (g_game->getGameState() == GAME_STATE_SHUTDOWN) {
 		disconnect();
 		return;
 	}

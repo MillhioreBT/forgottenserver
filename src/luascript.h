@@ -67,6 +67,10 @@ public:
 	bool callFunction(int params);
 	void callVoidFunction(int params);
 
+	void registerClass(const std::string& className, const std::string& baseClass, lua_CFunction newFunction = nullptr);
+	void registerMetaMethod(const std::string& className, const std::string& methodName, lua_CFunction func);
+	void registerMethod(const std::string& globalName, const std::string& methodName, lua_CFunction func);
+
 #ifndef LUAJIT_VERSION
 	static const luaL_Reg luaBitReg[7];
 #endif
@@ -79,7 +83,6 @@ protected:
 
 	void registerFunctions();
 
-	void registerMethod(const std::string& globalName, const std::string& methodName, lua_CFunction func);
 
 	lua_State* luaState = nullptr;
 
@@ -90,9 +93,7 @@ protected:
 	std::map<int32_t, std::string> cacheFiles;
 
 private:
-	void registerClass(const std::string& className, const std::string& baseClass, lua_CFunction newFunction = nullptr);
 	void registerTable(const std::string& tableName);
-	void registerMetaMethod(const std::string& className, const std::string& methodName, lua_CFunction func);
 	void registerGlobalMethod(const std::string& functionName, lua_CFunction func);
 	void registerVariable(const std::string& tableName, const std::string& name, lua_Number value);
 	void registerGlobalVariable(const std::string& name, lua_Number value);

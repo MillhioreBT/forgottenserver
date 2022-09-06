@@ -13,7 +13,7 @@
 #include "monster.h"
 #include "spectators.h"
 
-extern Game g_game;
+extern Game* g_game;
 
 bool Map::loadMap(const std::string& identifier, bool loadHouses)
 {
@@ -162,22 +162,22 @@ void Map::removeTile(uint16_t x, uint16_t y, uint8_t z)
 		if (const CreatureVector* creatures = tile->getCreatures()) {
 			for (int32_t i = creatures->size(); --i >= 0;) {
 				if (Player* player = (*creatures)[i]->getPlayer()) {
-					g_game.internalTeleport(player, player->getTown()->getTemplePosition(), false, FLAG_NOLIMIT);
+					g_game->internalTeleport(player, player->getTown()->getTemplePosition(), false, FLAG_NOLIMIT);
 				} else {
-					g_game.removeCreature((*creatures)[i]);
+					g_game->removeCreature((*creatures)[i]);
 				}
 			}
 		}
 
 		if (TileItemVector* items = tile->getItemList()) {
 			for (auto it = items->begin(), end = items->end(); it != end; ++it) {
-				g_game.internalRemoveItem(*it);
+				g_game->internalRemoveItem(*it);
 			}
 		}
 
 		Item* ground = tile->getGround();
 		if (ground) {
-			g_game.internalRemoveItem(ground);
+			g_game->internalRemoveItem(ground);
 			tile->setGround(nullptr);
 		}
 	}
@@ -517,7 +517,7 @@ bool checkSteepLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint8_t 
 
 	for (uint16_t x = x0 + 1; x < x1; ++x) {
 		// 0.1 is necessary to avoid loss of precision during calculation
-		if (!g_game.map.isTileClear(std::floor(yi + 0.1), x, z)) {
+		if (!g_game->map.isTileClear(std::floor(yi + 0.1), x, z)) {
 			return false;
 		}
 		yi += slope;
@@ -534,7 +534,7 @@ bool checkSlightLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint8_t
 
 	for (uint16_t x = x0 + 1; x < x1; ++x) {
 		// 0.1 is necessary to avoid loss of precision during calculation
-		if (!g_game.map.isTileClear(x, std::floor(yi + 0.1), z)) {
+		if (!g_game->map.isTileClear(x, std::floor(yi + 0.1), z)) {
 			return false;
 		}
 		yi += slope;
@@ -1020,13 +1020,13 @@ uint32_t Map::clean() const
 	uint64_t start = OTSYS_TIME();
 	size_t tiles = 0;
 
-	if (g_game.getGameState() == GAME_STATE_NORMAL) {
-		g_game.setGameState(GAME_STATE_MAINTAIN);
+	if (g_game->getGameState() == GAME_STATE_NORMAL) {
+		g_game->setGameState(GAME_STATE_MAINTAIN);
 	}
 
 	std::vector<Item*> toRemove;
 
-	for (auto tile : g_game.getTilesToClean()) {
+	for (auto tile : g_game->getTilesToClean()) {
 		if (!tile) {
 			continue;
 		}
@@ -1042,14 +1042,14 @@ uint32_t Map::clean() const
 	}
 
 	for (auto item : toRemove) {
-		g_game.internalRemoveItem(item, -1);
+		g_game->internalRemoveItem(item, -1);
 	}
 
 	size_t count = toRemove.size();
-	g_game.clearTilesToClean();
+	g_game->clearTilesToClean();
 
-	if (g_game.getGameState() == GAME_STATE_MAINTAIN) {
-		g_game.setGameState(GAME_STATE_NORMAL);
+	if (g_game->getGameState() == GAME_STATE_MAINTAIN) {
+		g_game->setGameState(GAME_STATE_NORMAL);
 	}
 
 	std::cout << "> CLEAN: Removed " << count << " item" << (count != 1 ? "s" : "") << " from " << tiles << " tile"

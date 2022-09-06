@@ -5,7 +5,7 @@
 #include "game.h"
 #include "item.h"
 
-extern Game g_game;
+extern Game* g_game;
 
 namespace tfs::lua {
 
@@ -48,7 +48,7 @@ void ScriptEnvironment::resetEnv()
 	while (it != pair.second) {
 		Item* item = it->second;
 		if (item && item->getParent() == VirtualCylinder::virtualCylinder) {
-			g_game.ReleaseItem(item);
+			g_game->ReleaseItem(item);
 		}
 		it = tempItems.erase(it);
 	}
@@ -115,11 +115,11 @@ void ScriptEnvironment::insertItem(uint32_t uid, Item* item)
 Thing* ScriptEnvironment::getThingByUID(uint32_t uid)
 {
 	if (uid >= CREATURE_ID_MIN) {
-		return g_game.getCreatureByID(uid);
+		return g_game->getCreatureByID(uid);
 	}
 
 	if (uid <= std::numeric_limits<uint16_t>::max()) {
-		Item* item = g_game.getUniqueItem(uid);
+		Item* item = g_game->getUniqueItem(uid);
 		if (item && !item->isRemoved()) {
 			return item;
 		}
@@ -157,7 +157,7 @@ Container* ScriptEnvironment::getContainerByUID(uint32_t uid)
 void ScriptEnvironment::removeItemByUID(uint32_t uid)
 {
 	if (uid <= std::numeric_limits<uint16_t>::max()) {
-		g_game.removeUniqueItem(uid);
+		g_game->removeUniqueItem(uid);
 		return;
 	}
 

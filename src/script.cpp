@@ -9,7 +9,7 @@
 
 #include <filesystem>
 
-extern LuaEnvironment g_luaEnvironment;
+extern LuaEnvironment* g_luaEnvironment;
 extern ConfigManager g_config;
 
 Scripts::Scripts() : scriptInterface("Scripts Interface") { scriptInterface.initState(); }

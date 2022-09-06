@@ -29,7 +29,9 @@ DatabaseTasks g_databaseTasks;
 Dispatcher g_dispatcher;
 Scheduler g_scheduler;
 
-Game g_game;
+Game* g_game = nullptr;
+LuaEnvironment* g_luaEnvironment = nullptr;
+
 ConfigManager g_config;
 Monsters g_monsters;
 Vocations g_vocations;
@@ -170,8 +172,13 @@ void printServerVersion()
 
 void mainLoader(int, char*[], ServiceManager* services)
 {
+	g_luaEnvironment = new LuaEnvironment();
+	g_luaEnvironment->initState();
+
+	g_game = new Game();
+
 	// dispatcher thread
-	g_game.setGameState(GAME_STATE_STARTUP);
+	g_game->setGameState(GAME_STATE_STARTUP);
 
 	srand(static_cast<unsigned int>(OTSYS_TIME()));
 #ifdef _WIN32
@@ -308,11 +315,11 @@ void mainLoader(int, char*[], ServiceManager* services)
 	std::cout << ">> Checking world type... " << std::flush;
 	std::string worldType = boost::algorithm::to_lower_copy(g_config.getString(ConfigManager::WORLD_TYPE));
 	if (worldType == "pvp") {
-		g_game.setWorldType(WORLD_TYPE_PVP);
+		g_game->setWorldType(WORLD_TYPE_PVP);
 	} else if (worldType == "no-pvp") {
-		g_game.setWorldType(WORLD_TYPE_NO_PVP);
+		g_game->setWorldType(WORLD_TYPE_NO_PVP);
 	} else if (worldType == "pvp-enforced") {
-		g_game.setWorldType(WORLD_TYPE_PVP_ENFORCED);
+		g_game->setWorldType(WORLD_TYPE_PVP_ENFORCED);
 	} else {
 		std::cout << std::endl;
 		startupErrorMessage(
@@ -323,13 +330,13 @@ void mainLoader(int, char*[], ServiceManager* services)
 	std::cout << boost::algorithm::to_upper_copy(worldType) << std::endl;
 
 	std::cout << ">> Loading map" << std::endl;
-	if (!g_game.loadMainMap(g_config.getString(ConfigManager::MAP_NAME))) {
+	if (!g_game->loadMainMap(g_config.getString(ConfigManager::MAP_NAME))) {
 		startupErrorMessage("Failed to load map");
 		return;
 	}
 
 	std::cout << ">> Initializing gamestate" << std::endl;
-	g_game.setGameState(GAME_STATE_INIT);
+	g_game->setGameState(GAME_STATE_INIT);
 
 	// Game client protocols
 	services->add<ProtocolGame>(static_cast<uint16_t>(g_config.getNumber(ConfigManager::GAME_PORT)));
@@ -356,7 +363,7 @@ void mainLoader(int, char*[], ServiceManager* services)
 		rentPeriod = RENTPERIOD_NEVER;
 	}
 
-	g_game.map.houses.payHouses(rentPeriod);
+	g_game->map.houses.payHouses(rentPeriod);
 
 	IOMarket::checkExpiredOffers();
 	IOMarket::getInstance().updateStatistics();
@@ -370,8 +377,8 @@ void mainLoader(int, char*[], ServiceManager* services)
 	}
 #endif
 
-	g_game.start(services);
-	g_game.setGameState(GAME_STATE_NORMAL);
+	g_game->start(services);
+	g_game->setGameState(GAME_STATE_NORMAL);
 	g_loaderSignal.notify_all();
 }
 

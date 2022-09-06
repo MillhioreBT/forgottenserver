@@ -48,7 +48,7 @@ extern MoveEvents* g_moveEvents;
 extern Weapons* g_weapons;
 extern Scripts* g_scripts;
 
-extern Game g_game;
+extern Game* g_game;
 
 Game::Game()
 {
@@ -4720,7 +4720,7 @@ void Game::loadAccountStorageValues()
 	DBResult_ptr result;
 	if ((result = db.storeQuery("SELECT `account_id`, `key`, `value` FROM `account_storage`"))) {
 		do {
-			g_game.setAccountStorageValue(result->getNumber<uint32_t>("account_id"), result->getNumber<uint32_t>("key"),
+			g_game->setAccountStorageValue(result->getNumber<uint32_t>("account_id"), result->getNumber<uint32_t>("key"),
 			                              result->getNumber<int32_t>("value"));
 		} while (result->next());
 	}
@@ -4739,7 +4739,7 @@ bool Game::saveAccountStorageValues() const
 		return false;
 	}
 
-	for (const auto& accountIt : g_game.accountStorageMap) {
+	for (const auto& accountIt : g_game->accountStorageMap) {
 		if (accountIt.second.empty()) {
 			continue;
 		}

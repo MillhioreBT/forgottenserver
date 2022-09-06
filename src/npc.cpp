@@ -13,15 +13,15 @@
 #include "pugicast.h"
 #include "spectators.h"
 
-extern Game g_game;
-extern LuaEnvironment g_luaEnvironment;
+extern Game* g_game;
+extern LuaEnvironment* g_luaEnvironment;
 
 uint32_t Npc::npcAutoID = 0x20000000;
 NpcScriptInterface* Npc::scriptInterface = nullptr;
 
 void Npcs::reload()
 {
-	const std::map<uint32_t, Npc*>& npcs = g_game.getNpcs();
+	const std::map<uint32_t, Npc*>& npcs = g_game->getNpcs();
 	for (const auto& it : npcs) {
 		it.second->closeAllShopWindows();
 	}
@@ -51,9 +51,9 @@ Npc::Npc(const std::string& name) :
 
 Npc::~Npc() { reset(); }
 
-void Npc::addList() { g_game.addNpc(this); }
+void Npc::addList() { g_game->addNpc(this); }
 
-void Npc::removeList() { g_game.removeNpc(this); }
+void Npc::removeList() { g_game->removeNpc(this); }
 
 bool Npc::load()
 {
@@ -98,7 +98,7 @@ void Npc::reload()
 	load();
 
 	SpectatorVec players;
-	g_game.map.getSpectators(players, getPosition(), true, true);
+	g_game->map.getSpectators(players, getPosition(), true, true);
 	for (const auto& player : players) {
 		spectators.insert(player->getPlayer());
 	}
@@ -244,7 +244,7 @@ void Npc::onCreatureAppear(Creature* creature, bool isLogin)
 
 	if (creature == this) {
 		SpectatorVec players;
-		g_game.map.getSpectators(players, getPosition(), true, true);
+		g_game->map.getSpectators(players, getPosition(), true, true);
 		for (const auto& player : players) {
 			spectators.insert(player->getPlayer());
 		}
@@ -348,7 +348,7 @@ void Npc::onThink(uint32_t interval)
 	}
 }
 
-void Npc::doSay(const std::string& text) { g_game.internalCreatureSay(this, TALKTYPE_SAY, text, false); }
+void Npc::doSay(const std::string& text) { g_game->internalCreatureSay(this, TALKTYPE_SAY, text, false); }
 
 void Npc::doSayToPlayer(Player* player, const std::string& text)
 {
@@ -435,7 +435,7 @@ bool Npc::canWalkTo(const Position& fromPos, Direction dir) const
 		return false;
 	}
 
-	Tile* tile = g_game.map.getTile(toPos);
+	Tile* tile = g_game->map.getTile(toPos);
 	if (!tile || tile->queryAdd(0, *this, 1, 0) != RETURNVALUE_NOERROR) {
 		return false;
 	}
@@ -520,7 +520,7 @@ void Npc::turnToCreature(Creature* creature)
 			dir = DIRECTION_SOUTH;
 		}
 	}
-	g_game.internalCreatureTurn(this, dir);
+	g_game->internalCreatureTurn(this, dir);
 }
 
 void Npc::setCreatureFocus(Creature* creature)
@@ -557,7 +557,7 @@ NpcScriptInterface::NpcScriptInterface() : LuaScriptInterface("Npc interface")
 
 bool NpcScriptInterface::initState()
 {
-	luaState = g_luaEnvironment.getLuaState();
+	luaState = g_luaEnvironment->getLuaState();
 	if (!luaState) {
 		return false;
 	}
@@ -642,7 +642,7 @@ int NpcScriptInterface::luaActionMove(lua_State* L)
 	// selfMove(direction)
 	Npc* npc = tfs::lua::getScriptEnv()->getNpc();
 	if (npc) {
-		g_game.internalMoveCreature(npc, tfs::lua::getNumber<Direction>(L, 1));
+		g_game->internalMoveCreature(npc, tfs::lua::getNumber<Direction>(L, 1));
 	}
 	return 0;
 }
@@ -681,7 +681,7 @@ int NpcScriptInterface::luaActionTurn(lua_State* L)
 	// selfTurn(direction)
 	Npc* npc = tfs::lua::getScriptEnv()->getNpc();
 	if (npc) {
-		g_game.internalCreatureTurn(npc, tfs::lua::getNumber<Direction>(L, 1));
+		g_game->internalCreatureTurn(npc, tfs::lua::getNumber<Direction>(L, 1));
 	}
 	return 0;
 }
@@ -923,7 +923,7 @@ int NpcScriptInterface::luaDoSellItem(lua_State* L)
 				item->setActionId(actionId);
 			}
 
-			if (g_game.internalPlayerAddItem(player, item, canDropOnMap) != RETURNVALUE_NOERROR) {
+			if (g_game->internalPlayerAddItem(player, item, canDropOnMap) != RETURNVALUE_NOERROR) {
 				delete item;
 				lua_pushnumber(L, sellCount);
 				return 1;
@@ -939,7 +939,7 @@ int NpcScriptInterface::luaDoSellItem(lua_State* L)
 				item->setActionId(actionId);
 			}
 
-			if (g_game.internalPlayerAddItem(player, item, canDropOnMap) != RETURNVALUE_NOERROR) {
+			if (g_game->internalPlayerAddItem(player, item, canDropOnMap) != RETURNVALUE_NOERROR) {
 				delete item;
 				lua_pushnumber(L, sellCount);
 				return 1;
