@@ -711,6 +711,41 @@ int luaTileGetHouse(lua_State* L)
 
 void registerFunctions(LuaScriptInterface& lsi)
 {
+	// Enums
+	registerEnum(lsi, TILESTATE_NONE);
+	registerEnum(lsi, TILESTATE_PROTECTIONZONE);
+	registerEnum(lsi, TILESTATE_NOPVPZONE);
+	registerEnum(lsi, TILESTATE_NOLOGOUT);
+	registerEnum(lsi, TILESTATE_PVPZONE);
+	registerEnum(lsi, TILESTATE_FLOORCHANGE);
+	registerEnum(lsi, TILESTATE_FLOORCHANGE_DOWN);
+	registerEnum(lsi, TILESTATE_FLOORCHANGE_NORTH);
+	registerEnum(lsi, TILESTATE_FLOORCHANGE_SOUTH);
+	registerEnum(lsi, TILESTATE_FLOORCHANGE_EAST);
+	registerEnum(lsi, TILESTATE_FLOORCHANGE_WEST);
+	registerEnum(lsi, TILESTATE_TELEPORT);
+	registerEnum(lsi, TILESTATE_MAGICFIELD);
+	registerEnum(lsi, TILESTATE_MAILBOX);
+	registerEnum(lsi, TILESTATE_TRASHHOLDER);
+	registerEnum(lsi, TILESTATE_BED);
+	registerEnum(lsi, TILESTATE_DEPOT);
+	registerEnum(lsi, TILESTATE_BLOCKSOLID);
+	registerEnum(lsi, TILESTATE_BLOCKPATH);
+	registerEnum(lsi, TILESTATE_IMMOVABLEBLOCKSOLID);
+	registerEnum(lsi, TILESTATE_IMMOVABLEBLOCKPATH);
+	registerEnum(lsi, TILESTATE_IMMOVABLENOFIELDBLOCKPATH);
+	registerEnum(lsi, TILESTATE_NOFIELDBLOCKPATH);
+	registerEnum(lsi, TILESTATE_FLOORCHANGE_SOUTH_ALT);
+	registerEnum(lsi, TILESTATE_FLOORCHANGE_EAST_ALT);
+	registerEnum(lsi, TILESTATE_SUPPORTS_HANGABLE);
+
+	registerEnum(lsi, ZONE_PROTECTION);
+	registerEnum(lsi, ZONE_NOPVP);
+	registerEnum(lsi, ZONE_PVP);
+	registerEnum(lsi, ZONE_NOLOGOUT);
+	registerEnum(lsi, ZONE_NORMAL);
+
+	// Tile
 	lsi.registerClass("Tile", "", luaTileCreate);
 	lsi.registerMetaMethod("Tile", "__eq", luaUserdataCompare);
 

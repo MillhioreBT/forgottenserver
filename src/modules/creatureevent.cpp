@@ -19,18 +19,18 @@ using namespace tfs::lua;
 int luaCreateCreatureEvent(lua_State* L)
 {
 	// CreatureEvent(eventName)
-	if (tfs::lua::getScriptEnv()->getScriptInterface() != &g_scripts->getScriptInterface()) {
+	if (getScriptEnv()->getScriptInterface() != &g_scripts->getScriptInterface()) {
 		reportErrorFunc(L, "CreatureEvents can only be registered in the Scripts interface.");
 		lua_pushnil(L);
 		return 1;
 	}
 
-	CreatureEvent* creature = new CreatureEvent(tfs::lua::getScriptEnv()->getScriptInterface());
+	CreatureEvent* creature = new CreatureEvent(getScriptEnv()->getScriptInterface());
 	if (creature) {
-		creature->setName(tfs::lua::getString(L, 2));
+		creature->setName(getString(L, 2));
 		creature->fromLua = true;
-		tfs::lua::pushUserdata<CreatureEvent>(L, creature);
-		tfs::lua::setMetatable(L, -1, "CreatureEvent");
+		pushUserdata<CreatureEvent>(L, creature);
+		setMetatable(L, -1, "CreatureEvent");
 	} else {
 		lua_pushnil(L);
 	}
@@ -40,9 +40,9 @@ int luaCreateCreatureEvent(lua_State* L)
 int luaCreatureEventType(lua_State* L)
 {
 	// creatureevent:type(callback)
-	CreatureEvent* creature = tfs::lua::getUserdata<CreatureEvent>(L, 1);
+	CreatureEvent* creature = getUserdata<CreatureEvent>(L, 1);
 	if (creature) {
-		std::string typeName = tfs::lua::getString(L, 2);
+		std::string typeName = getString(L, 2);
 		std::string tmpStr = boost::algorithm::to_lower_copy(typeName);
 		if (tmpStr == "login") {
 			creature->setEventType(CREATURE_EVENT_LOGIN);
@@ -71,10 +71,10 @@ int luaCreatureEventType(lua_State* L)
 		} else {
 			std::cout << "[Error - CreatureEvent::configureLuaEvent] Invalid type for creature event: " << typeName
 			          << std::endl;
-			tfs::lua::pushBoolean(L, false);
+			pushBoolean(L, false);
 		}
 		creature->setLoaded(true);
-		tfs::lua::pushBoolean(L, true);
+		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
 	}
@@ -84,13 +84,13 @@ int luaCreatureEventType(lua_State* L)
 int luaCreatureEventRegister(lua_State* L)
 {
 	// creatureevent:register()
-	CreatureEvent* creature = tfs::lua::getUserdata<CreatureEvent>(L, 1);
+	CreatureEvent* creature = getUserdata<CreatureEvent>(L, 1);
 	if (creature) {
 		if (!creature->isScripted()) {
-			tfs::lua::pushBoolean(L, false);
+			pushBoolean(L, false);
 			return 1;
 		}
-		tfs::lua::pushBoolean(L, g_creatureEvents->registerLuaEvent(creature));
+		pushBoolean(L, g_creatureEvents->registerLuaEvent(creature));
 	} else {
 		lua_pushnil(L);
 	}
@@ -100,13 +100,13 @@ int luaCreatureEventRegister(lua_State* L)
 int luaCreatureEventOnCallback(lua_State* L)
 {
 	// creatureevent:onLogin / logout / etc. (callback)
-	CreatureEvent* creature = tfs::lua::getUserdata<CreatureEvent>(L, 1);
+	CreatureEvent* creature = getUserdata<CreatureEvent>(L, 1);
 	if (creature) {
 		if (!creature->loadCallback()) {
-			tfs::lua::pushBoolean(L, false);
+			pushBoolean(L, false);
 			return 1;
 		}
-		tfs::lua::pushBoolean(L, true);
+		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
 	}
@@ -115,6 +115,22 @@ int luaCreatureEventOnCallback(lua_State* L)
 
 void registerFunctions(LuaScriptInterface& lsi)
 {
+	// Enums
+	registerEnum(lsi, CREATURE_EVENT_NONE);
+	registerEnum(lsi, CREATURE_EVENT_LOGIN);
+	registerEnum(lsi, CREATURE_EVENT_LOGOUT);
+	registerEnum(lsi, CREATURE_EVENT_THINK);
+	registerEnum(lsi, CREATURE_EVENT_PREPAREDEATH);
+	registerEnum(lsi, CREATURE_EVENT_DEATH);
+	registerEnum(lsi, CREATURE_EVENT_KILL);
+	registerEnum(lsi, CREATURE_EVENT_ADVANCE);
+	registerEnum(lsi, CREATURE_EVENT_MODALWINDOW);
+	registerEnum(lsi, CREATURE_EVENT_TEXTEDIT);
+	registerEnum(lsi, CREATURE_EVENT_HEALTHCHANGE);
+	registerEnum(lsi, CREATURE_EVENT_MANACHANGE);
+	registerEnum(lsi, CREATURE_EVENT_EXTENDED_OPCODE);
+
+	// CreatureEvent
 	lsi.registerClass("CreatureEvent", "", luaCreateCreatureEvent);
 	lsi.registerMethod("CreatureEvent", "type", luaCreatureEventType);
 	lsi.registerMethod("CreatureEvent", "register", luaCreatureEventRegister);

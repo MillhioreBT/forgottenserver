@@ -67,9 +67,15 @@ public:
 	bool callFunction(int params);
 	void callVoidFunction(int params);
 
-	void registerClass(const std::string& className, const std::string& baseClass, lua_CFunction newFunction = nullptr);
-	void registerMetaMethod(const std::string& className, const std::string& methodName, lua_CFunction func);
-	void registerMethod(const std::string& globalName, const std::string& methodName, lua_CFunction func);
+	void registerGlobalMethod(std::string_view functionName, lua_CFunction func);
+	void registerGlobalVariable(std::string_view name, lua_Number value);
+	void registerGlobalBoolean(std::string_view name, bool value);
+
+	void registerTable(std::string_view tableName);
+	void registerClass(std::string_view className, std::string_view baseClass, lua_CFunction newFunction = nullptr);
+	void registerMetaMethod(std::string_view className, std::string_view methodName, lua_CFunction func);
+	void registerMethod(std::string_view globalName, std::string_view methodName, lua_CFunction func);
+	void registerVariable(std::string_view tableName, std::string_view name, lua_Number value);
 
 #ifndef LUAJIT_VERSION
 	static const luaL_Reg luaBitReg[7];
@@ -83,7 +89,6 @@ protected:
 
 	void registerFunctions();
 
-
 	lua_State* luaState = nullptr;
 
 	int32_t eventTableRef = -1;
@@ -93,12 +98,6 @@ protected:
 	std::map<int32_t, std::string> cacheFiles;
 
 private:
-	void registerTable(const std::string& tableName);
-	void registerGlobalMethod(const std::string& functionName, lua_CFunction func);
-	void registerVariable(const std::string& tableName, const std::string& name, lua_Number value);
-	void registerGlobalVariable(const std::string& name, lua_Number value);
-	void registerGlobalBoolean(const std::string& name, bool value);
-
 	std::string lastLuaError;
 	std::string interfaceName;
 	std::string loadingFile;
