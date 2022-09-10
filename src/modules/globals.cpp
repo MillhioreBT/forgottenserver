@@ -825,4 +825,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("globals", registerFunctions);
+registerLuaModule("globals", registerFunctions, {});

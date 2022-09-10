@@ -354,7 +354,7 @@ Creature* getCreature(lua_State* L, int32_t arg)
 	if (lua_isuserdata(L, arg)) {
 		return getUserdata<Creature>(L, arg);
 	}
-	return g_game->getCreatureByID(getNumber<uint32_t>(L, arg));
+	return getGlobalGame().getCreatureByID(getNumber<uint32_t>(L, arg));
 }
 
 Player* getPlayer(lua_State* L, int32_t arg)
@@ -362,7 +362,7 @@ Player* getPlayer(lua_State* L, int32_t arg)
 	if (lua_isuserdata(L, arg)) {
 		return getUserdata<Player>(L, arg);
 	}
-	return g_game->getPlayerByID(getNumber<uint32_t>(L, arg));
+	return getGlobalGame().getPlayerByID(getNumber<uint32_t>(L, arg));
 }
 
 LuaDataType getUserdataType(lua_State* L, int32_t arg)

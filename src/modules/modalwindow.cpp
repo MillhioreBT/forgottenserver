@@ -280,4 +280,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("modalwindow", registerFunctions);
+registerLuaModule("modalwindow", registerFunctions, {});

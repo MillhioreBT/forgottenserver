@@ -357,4 +357,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("moveevent", registerFunctions);
+registerLuaModule("moveevent", registerFunctions, {});

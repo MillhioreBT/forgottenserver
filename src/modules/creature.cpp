@@ -24,9 +24,9 @@ int luaCreatureCreate(lua_State* L)
 	// Creature(id or name or userdata)
 	Creature* creature;
 	if (isNumber(L, 2)) {
-		creature = g_game->getCreatureByID(getNumber<uint32_t>(L, 2));
+		creature = getGlobalGame().getCreatureByID(getNumber<uint32_t>(L, 2));
 	} else if (lua_isstring(L, 2)) {
-		creature = g_game->getCreatureByName(getString(L, 2));
+		creature = getGlobalGame().getCreatureByName(getString(L, 2));
 	} else if (lua_isuserdata(L, 2)) {
 		LuaDataType type = getUserdataType(L, 2);
 		if (type != LuaData_Player && type != LuaData_Monster && type != LuaData_Npc) {
@@ -350,7 +350,7 @@ int luaCreatureSetMaster(lua_State* L)
 
 	// update summon icon
 	SpectatorVec spectators;
-	g_game->map.getSpectators(spectators, creature->getPosition(), true, true);
+	getGlobalGame().map.getSpectators(spectators, creature->getPosition(), true, true);
 
 	for (Creature* spectator : spectators) {
 		spectator->getPlayer()->sendUpdateTileCreature(creature);
@@ -386,7 +386,7 @@ int luaCreatureSetLight(lua_State* L)
 	light.color = getNumber<uint8_t>(L, 2);
 	light.level = getNumber<uint8_t>(L, 3);
 	creature->setCreatureLight(light);
-	g_game->changeLight(creature);
+	getGlobalGame().changeLight(creature);
 	pushBoolean(L, true);
 	return 1;
 }
@@ -426,7 +426,7 @@ int luaCreatureChangeSpeed(lua_State* L)
 	}
 
 	int32_t delta = getNumber<int32_t>(L, 2);
-	g_game->changeSpeed(creature, delta);
+	getGlobalGame().changeSpeed(creature, delta);
 	pushBoolean(L, true);
 	return 1;
 }
@@ -505,7 +505,7 @@ int luaCreatureSetDirection(lua_State* L)
 	// creature:setDirection(direction)
 	Creature* creature = getUserdata<Creature>(L, 1);
 	if (creature) {
-		pushBoolean(L, g_game->internalCreatureTurn(creature, getNumber<Direction>(L, 2)));
+		pushBoolean(L, getGlobalGame().internalCreatureTurn(creature, getNumber<Direction>(L, 2)));
 	} else {
 		lua_pushnil(L);
 	}
@@ -534,7 +534,7 @@ int luaCreatureSetHealth(lua_State* L)
 	}
 
 	creature->setHealth(std::min<int32_t>(getNumber<uint32_t>(L, 2), creature->getMaxHealth()));
-	g_game->addCreatureHealth(creature);
+	getGlobalGame().addCreatureHealth(creature);
 
 	Player* player = creature->getPlayer();
 	if (player) {
@@ -560,7 +560,7 @@ int luaCreatureAddHealth(lua_State* L)
 	} else {
 		damage.primary.type = COMBAT_UNDEFINEDDAMAGE;
 	}
-	pushBoolean(L, g_game->combatChangeHealth(nullptr, creature, damage));
+	pushBoolean(L, getGlobalGame().combatChangeHealth(nullptr, creature, damage));
 	return 1;
 }
 
@@ -587,7 +587,7 @@ int luaCreatureSetMaxHealth(lua_State* L)
 
 	creature->setMaxHealth(getNumber<uint32_t>(L, 2));
 	creature->setHealth(std::min<int32_t>(creature->getHealth(), creature->getMaxHealth()));
-	g_game->addCreatureHealth(creature);
+	getGlobalGame().addCreatureHealth(creature);
 
 	Player* player = creature->getPlayer();
 	if (player) {
@@ -603,7 +603,7 @@ int luaCreatureSetHiddenHealth(lua_State* L)
 	Creature* creature = getUserdata<Creature>(L, 1);
 	if (creature) {
 		creature->setHiddenHealth(getBoolean(L, 2));
-		g_game->addCreatureHealth(creature);
+		getGlobalGame().addCreatureHealth(creature);
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
@@ -667,7 +667,7 @@ int luaCreatureSetOutfit(lua_State* L)
 	Creature* creature = getUserdata<Creature>(L, 1);
 	if (creature) {
 		creature->setDefaultOutfit(getOutfit(L, 2));
-		g_game->internalCreatureChangeOutfit(creature, creature->getDefaultOutfit());
+		getGlobalGame().internalCreatureChangeOutfit(creature, creature->getDefaultOutfit());
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
@@ -799,7 +799,7 @@ int luaCreatureRemove(lua_State* L)
 	if (player) {
 		player->kickPlayer(true);
 	} else {
-		g_game->removeCreature(creature);
+		getGlobalGame().removeCreature(creature);
 	}
 
 	*creaturePtr = nullptr;
@@ -820,7 +820,7 @@ int luaCreatureTeleportTo(lua_State* L)
 	}
 
 	const Position oldPosition = creature->getPosition();
-	if (g_game->internalTeleport(creature, position, pushMovement) != RETURNVALUE_NOERROR) {
+	if (getGlobalGame().internalTeleport(creature, position, pushMovement) != RETURNVALUE_NOERROR) {
 		pushBoolean(L, false);
 		return 1;
 	}
@@ -828,14 +828,14 @@ int luaCreatureTeleportTo(lua_State* L)
 	if (pushMovement) {
 		if (oldPosition.x == position.x) {
 			if (oldPosition.y < position.y) {
-				g_game->internalCreatureTurn(creature, DIRECTION_SOUTH);
+				getGlobalGame().internalCreatureTurn(creature, DIRECTION_SOUTH);
 			} else {
-				g_game->internalCreatureTurn(creature, DIRECTION_NORTH);
+				getGlobalGame().internalCreatureTurn(creature, DIRECTION_NORTH);
 			}
 		} else if (oldPosition.x > position.x) {
-			g_game->internalCreatureTurn(creature, DIRECTION_WEST);
+			getGlobalGame().internalCreatureTurn(creature, DIRECTION_WEST);
 		} else if (oldPosition.x < position.x) {
-			g_game->internalCreatureTurn(creature, DIRECTION_EAST);
+			getGlobalGame().internalCreatureTurn(creature, DIRECTION_EAST);
 		}
 	}
 	pushBoolean(L, true);
@@ -881,9 +881,9 @@ int luaCreatureSay(lua_State* L)
 	bool echo = getScriptEnv()->getScriptId() == g_events->getScriptId(EventInfoId::CREATURE_ONHEAR);
 
 	if (position.x != 0) {
-		pushBoolean(L, g_game->internalCreatureSay(creature, type, text, ghost, &spectators, &position, echo));
+		pushBoolean(L, getGlobalGame().internalCreatureSay(creature, type, text, ghost, &spectators, &position, echo));
 	} else {
-		pushBoolean(L, g_game->internalCreatureSay(creature, type, text, ghost, &spectators, nullptr, echo));
+		pushBoolean(L, getGlobalGame().internalCreatureSay(creature, type, text, ghost, &spectators, nullptr, echo));
 	}
 	return 1;
 }
@@ -990,14 +990,14 @@ int luaCreatureMove(lua_State* L)
 			lua_pushnil(L);
 			return 1;
 		}
-		lua_pushnumber(L, g_game->internalMoveCreature(creature, direction, FLAG_NOLIMIT));
+		lua_pushnumber(L, getGlobalGame().internalMoveCreature(creature, direction, FLAG_NOLIMIT));
 	} else {
 		Tile* tile = getUserdata<Tile>(L, 2);
 		if (!tile) {
 			lua_pushnil(L);
 			return 1;
 		}
-		lua_pushnumber(L, g_game->internalMoveCreature(*creature, *tile, getNumber<uint32_t>(L, 3)));
+		lua_pushnumber(L, getGlobalGame().internalMoveCreature(*creature, *tile, getNumber<uint32_t>(L, 3)));
 	}
 	return 1;
 }
@@ -1117,4 +1117,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("creature", registerFunctions);
+registerLuaModule("creature", registerFunctions, {});

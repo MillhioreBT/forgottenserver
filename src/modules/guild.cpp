@@ -19,7 +19,7 @@ int luaGuildCreate(lua_State* L)
 	// Guild(id)
 	uint32_t id = getNumber<uint32_t>(L, 2);
 
-	Guild* guild = g_game->getGuild(id);
+	Guild* guild = getGlobalGame().getGuild(id);
 	if (guild) {
 		pushUserdata<Guild>(L, guild);
 		setMetatable(L, -1, "Guild");
@@ -179,4 +179,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("guild", registerFunctions);
+registerLuaModule("guild", registerFunctions, {});

@@ -588,4 +588,6 @@ private:
 	bool useLastStageLevel = false;
 };
 
+Game& getGlobalGame();
+
 #endif // FS_GAME_H

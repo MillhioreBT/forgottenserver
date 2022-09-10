@@ -27,7 +27,7 @@ int32_t luaPartyCreate(lua_State* L)
 	Party* party = player->getParty();
 	if (!party) {
 		party = new Party(player);
-		g_game->updatePlayerShield(player);
+		getGlobalGame().updatePlayerShield(player);
 		player->sendCreatureSkull(player);
 		pushUserdata<Party>(L, party);
 		setMetatable(L, -1, "Party");
@@ -279,4 +279,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("party", registerFunctions);
+registerLuaModule("party", registerFunctions, {});

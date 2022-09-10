@@ -122,4 +122,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("talkaction", registerFunctions);
+registerLuaModule("talkaction", registerFunctions, {});

@@ -140,7 +140,7 @@ int luaItemSplit(lua_State* L)
 	ScriptEnvironment* env = getScriptEnv();
 	uint32_t uid = env->addThing(item);
 
-	Item* newItem = g_game->transformItem(item, item->getID(), diff);
+	Item* newItem = getGlobalGame().transformItem(item, item->getID(), diff);
 	if (item->isRemoved()) {
 		env->removeItemByUID(uid);
 	}
@@ -165,7 +165,7 @@ int luaItemRemove(lua_State* L)
 	Item* item = getUserdata<Item>(L, 1);
 	if (item) {
 		int32_t count = getNumber<int32_t>(L, 2, -1);
-		pushBoolean(L, g_game->internalRemoveItem(item, count) == RETURNVALUE_NOERROR);
+		pushBoolean(L, getGlobalGame().internalRemoveItem(item, count) == RETURNVALUE_NOERROR);
 	} else {
 		lua_pushnil(L);
 	}
@@ -587,7 +587,7 @@ int luaItemMoveTo(lua_State* L)
 				break;
 		}
 	} else {
-		toCylinder = g_game->map.getTile(getPosition(L, 2));
+		toCylinder = getGlobalGame().map.getTile(getPosition(L, 2));
 	}
 
 	if (!toCylinder) {
@@ -604,11 +604,12 @@ int luaItemMoveTo(lua_State* L)
 	    L, 3, FLAG_NOLIMIT | FLAG_IGNOREBLOCKITEM | FLAG_IGNOREBLOCKCREATURE | FLAG_IGNORENOTMOVEABLE);
 
 	if (item->getParent() == VirtualCylinder::virtualCylinder) {
-		pushBoolean(L, g_game->internalAddItem(toCylinder, item, INDEX_WHEREEVER, flags) == RETURNVALUE_NOERROR);
+		pushBoolean(L,
+		            getGlobalGame().internalAddItem(toCylinder, item, INDEX_WHEREEVER, flags) == RETURNVALUE_NOERROR);
 	} else {
 		Item* moveItem = nullptr;
-		ReturnValue ret = g_game->internalMoveItem(item->getParent(), toCylinder, INDEX_WHEREEVER, item,
-		                                           item->getItemCount(), &moveItem, flags);
+		ReturnValue ret = getGlobalGame().internalMoveItem(item->getParent(), toCylinder, INDEX_WHEREEVER, item,
+		                                                   item->getItemCount(), &moveItem, flags);
 		if (moveItem) {
 			*itemPtr = moveItem;
 		}
@@ -657,7 +658,7 @@ int luaItemTransform(lua_State* L)
 	ScriptEnvironment* env = getScriptEnv();
 	uint32_t uid = env->addThing(item);
 
-	Item* newItem = g_game->transformItem(item, itemId, subType);
+	Item* newItem = getGlobalGame().transformItem(item, itemId, subType);
 	if (item->isRemoved()) {
 		env->removeItemByUID(uid);
 	}
@@ -680,7 +681,7 @@ int luaItemDecay(lua_State* L)
 			item->setDecayTo(getNumber<int32_t>(L, 2));
 		}
 
-		g_game->startDecay(item);
+		getGlobalGame().startDecay(item);
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
@@ -885,4 +886,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("item", registerFunctions);
+registerLuaModule("item", registerFunctions, {});

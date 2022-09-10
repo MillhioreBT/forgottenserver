@@ -48,7 +48,7 @@ int luaPodiumSetOutfit(lua_State* L)
 	Podium* podium = getUserdata<Podium>(L, 1);
 	if (podium) {
 		podium->setOutfit(getOutfit(L, 2));
-		g_game->updatePodium(podium);
+		getGlobalGame().updatePodium(podium);
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
@@ -78,7 +78,7 @@ int luaPodiumSetFlag(lua_State* L)
 
 	if (podium) {
 		podium->setFlagValue(flag, value);
-		g_game->updatePodium(podium);
+		getGlobalGame().updatePodium(podium);
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
@@ -104,7 +104,7 @@ int luaPodiumSetDirection(lua_State* L)
 	Podium* podium = getUserdata<Podium>(L, 1);
 	if (podium) {
 		podium->setDirection(getNumber<Direction>(L, 2));
-		g_game->updatePodium(podium);
+		getGlobalGame().updatePodium(podium);
 		pushBoolean(L, true);
 	} else {
 		lua_pushnil(L);
@@ -127,4 +127,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("podium", registerFunctions);
+registerLuaModule("podium", registerFunctions, {"item"});

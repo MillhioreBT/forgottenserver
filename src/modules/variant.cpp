@@ -77,4 +77,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("variant", registerFunctions);
+registerLuaModule("variant", registerFunctions, {});

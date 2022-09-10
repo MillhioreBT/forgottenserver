@@ -948,4 +948,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("spells", registerFunctions);
+registerLuaModule("spells", registerFunctions, {});

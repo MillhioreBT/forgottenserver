@@ -271,7 +271,7 @@ ReturnValue Actions::canUseFar(const Creature* creature, const Position& toPos, 
 		return RETURNVALUE_TOOFARAWAY;
 	}
 
-	if (checkLineOfSight && !g_game->canThrowObjectTo(creaturePos, toPos, checkLineOfSight, checkFloor)) {
+	if (checkLineOfSight && !getGlobalGame().canThrowObjectTo(creaturePos, toPos, checkLineOfSight, checkFloor)) {
 		return RETURNVALUE_CANNOTTHROW;
 	}
 
@@ -340,7 +340,7 @@ ReturnValue Actions::internalUseItem(Player* player, const Position& pos, uint8_
 
 		if (bed->trySleep(player)) {
 			player->setBedItem(bed);
-			g_game->sendOfflineTrainingDialog(player);
+			getGlobalGame().sendOfflineTrainingDialog(player);
 		}
 
 		return RETURNVALUE_NOERROR;
@@ -431,7 +431,7 @@ bool Actions::useItem(Player* player, const Position& pos, uint8_t index, Item* 
 
 	ReturnValue ret = internalUseItem(player, pos, index, item, isHotkey);
 	if (ret == RETURNVALUE_YOUCANNOTUSETHISBED) {
-		g_game->internalCreatureSay(player, TALKTYPE_MONSTER_SAY, getReturnMessage(ret), false);
+		getGlobalGame().internalCreatureSay(player, TALKTYPE_MONSTER_SAY, getReturnMessage(ret), false);
 		return false;
 	}
 
@@ -491,7 +491,8 @@ bool Actions::useItemEx(Player* player, const Position& fromPos, const Position&
 
 Action::Action(LuaScriptInterface* interface) :
     Event(interface), function(nullptr), allowFarUse(false), checkFloor(true), checkLineOfSight(true)
-{}
+{
+}
 
 bool Action::configureEvent(const pugi::xml_node& node)
 {
@@ -557,7 +558,7 @@ Thing* Action::getTarget(Player* player, Creature* targetCreature, const Positio
 	if (targetCreature) {
 		return targetCreature;
 	}
-	return g_game->internalGetThing(player, toPosition, toStackPos, 0, STACKPOS_USETARGET);
+	return getGlobalGame().internalGetThing(player, toPosition, toStackPos, 0, STACKPOS_USETARGET);
 }
 
 bool Action::executeUse(Player* player, Item* item, const Position& fromPosition, Thing* target,

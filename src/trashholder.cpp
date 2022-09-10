@@ -48,10 +48,10 @@ void TrashHolder::addThing(int32_t, Thing* thing)
 		}
 	}
 
-	g_game->internalRemoveItem(item);
+	getGlobalGame().internalRemoveItem(item);
 
 	if (it.magicEffect != CONST_ME_NONE) {
-		g_game->addMagicEffect(getPosition(), it.magicEffect);
+		getGlobalGame().addMagicEffect(getPosition(), it.magicEffect);
 	}
 }
 

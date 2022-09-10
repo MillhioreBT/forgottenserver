@@ -20,7 +20,7 @@ int luaGroupCreate(lua_State* L)
 	// Group(id)
 	uint32_t id = getNumber<uint32_t>(L, 2);
 
-	Group* group = g_game->groups.getGroup(id);
+	Group* group = getGlobalGame().groups.getGroup(id);
 	if (group) {
 		pushUserdata<Group>(L, group);
 		setMetatable(L, -1, "Group");
@@ -131,4 +131,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("groups", registerFunctions);
+registerLuaModule("groups", registerFunctions, {});

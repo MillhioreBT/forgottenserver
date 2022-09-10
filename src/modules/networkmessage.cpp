@@ -363,4 +363,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("networkmessage", registerFunctions);
+registerLuaModule("networkmessage", registerFunctions, {});

@@ -36,8 +36,8 @@ LuaScriptInterface::~LuaScriptInterface() { closeState(); }
 
 bool LuaScriptInterface::reInitState()
 {
-	g_luaEnvironment->clearCombatObjects(this);
-	g_luaEnvironment->clearAreaObjects(this);
+	getGlobalLuaEnvironment().clearCombatObjects(this);
+	getGlobalLuaEnvironment().clearAreaObjects(this);
 
 	closeState();
 	return initState();
@@ -192,7 +192,7 @@ bool LuaScriptInterface::pushFunction(int32_t functionId)
 
 bool LuaScriptInterface::initState()
 {
-	luaState = g_luaEnvironment->getLuaState();
+	luaState = getGlobalLuaEnvironment().getLuaState();
 	if (!luaState) {
 		return false;
 	}
@@ -205,7 +205,7 @@ bool LuaScriptInterface::initState()
 
 bool LuaScriptInterface::closeState()
 {
-	if (!g_luaEnvironment->getLuaState() || !luaState) {
+	if (!getGlobalLuaEnvironment().getLuaState() || !luaState) {
 		return false;
 	}
 
@@ -401,7 +401,7 @@ int luaDebugPrint(lua_State* L)
 int luaGetWorldTime(lua_State* L)
 {
 	// getWorldTime()
-	int16_t time = g_game->getWorldTime();
+	int16_t time = getGlobalGame().getWorldTime();
 	lua_pushnumber(L, time);
 	return 1;
 }
@@ -409,7 +409,7 @@ int luaGetWorldTime(lua_State* L)
 int luaGetWorldLight(lua_State* L)
 {
 	// getWorldLight()
-	LightInfo lightInfo = g_game->getWorldLightInfo();
+	LightInfo lightInfo = getGlobalGame().getWorldLightInfo();
 	lua_pushnumber(L, lightInfo.level);
 	lua_pushnumber(L, lightInfo.color);
 	return 2;
@@ -426,7 +426,7 @@ int luaSetWorldLight(lua_State* L)
 	LightInfo lightInfo;
 	lightInfo.level = tfs::lua::getNumber<uint8_t>(L, 1);
 	lightInfo.color = tfs::lua::getNumber<uint8_t>(L, 2);
-	g_game->setWorldLightInfo(lightInfo);
+	getGlobalGame().setWorldLightInfo(lightInfo);
 	tfs::lua::pushBoolean(L, true);
 	return 1;
 }
@@ -485,8 +485,8 @@ int luaCreateCombatArea(lua_State* L)
 		return 1;
 	}
 
-	uint32_t areaId = g_luaEnvironment->createAreaObject(env->getScriptInterface());
-	AreaCombat* area = g_luaEnvironment->getAreaObject(areaId);
+	uint32_t areaId = getGlobalLuaEnvironment().createAreaObject(env->getScriptInterface());
+	AreaCombat* area = getGlobalLuaEnvironment().getAreaObject(areaId);
 
 	int parameters = lua_gettop(L);
 	if (parameters >= 2) {
@@ -525,7 +525,7 @@ int luaDoAreaCombat(lua_State* L)
 	}
 
 	uint32_t areaId = tfs::lua::getNumber<uint32_t>(L, 4);
-	const AreaCombat* area = g_luaEnvironment->getAreaObject(areaId);
+	const AreaCombat* area = getGlobalLuaEnvironment().getAreaObject(areaId);
 	if (area || areaId == 0) {
 		CombatType_t combatType = tfs::lua::getNumber<CombatType_t>(L, 2);
 
@@ -676,7 +676,7 @@ int luaDoAddContainerItem(lua_State* L)
 			subType -= stackCount;
 		}
 
-		ReturnValue ret = g_game->internalAddItem(container, newItem);
+		ReturnValue ret = getGlobalGame().internalAddItem(container, newItem);
 		if (ret != RETURNVALUE_NOERROR) {
 			delete newItem;
 			tfs::lua::pushBoolean(L, false);
@@ -832,11 +832,11 @@ int luaAddEvent(lua_State* L)
 	eventDesc.function = luaL_ref(L, LUA_REGISTRYINDEX);
 	eventDesc.scriptId = tfs::lua::getScriptEnv()->getScriptId();
 
-	auto& lastTimerEventId = g_luaEnvironment->lastEventTimerId;
+	auto& lastTimerEventId = getGlobalLuaEnvironment().lastEventTimerId;
 	eventDesc.eventId = g_scheduler.addEvent(
-	    createSchedulerTask(delay, [=]() { g_luaEnvironment->executeTimerEvent(lastTimerEventId); }));
+	    createSchedulerTask(delay, [=]() { getGlobalLuaEnvironment().executeTimerEvent(lastTimerEventId); }));
 
-	g_luaEnvironment->timerEvents.emplace(lastTimerEventId, std::move(eventDesc));
+	getGlobalLuaEnvironment().timerEvents.emplace(lastTimerEventId, std::move(eventDesc));
 	lua_pushnumber(L, lastTimerEventId++);
 	return 1;
 }
@@ -846,7 +846,7 @@ int luaStopEvent(lua_State* L)
 	// stopEvent(eventid)
 	uint32_t eventId = tfs::lua::getNumber<uint32_t>(L, 1);
 
-	auto& timerEvents = g_luaEnvironment->timerEvents;
+	auto& timerEvents = getGlobalLuaEnvironment().timerEvents;
 	auto it = timerEvents.find(eventId);
 	if (it == timerEvents.end()) {
 		tfs::lua::pushBoolean(L, false);
@@ -869,14 +869,14 @@ int luaStopEvent(lua_State* L)
 
 int luaSaveServer(lua_State* L)
 {
-	g_game->saveGameState();
+	getGlobalGame().saveGameState();
 	tfs::lua::pushBoolean(L, true);
 	return 1;
 }
 
 int luaCleanMap(lua_State* L)
 {
-	lua_pushnumber(L, g_game->map.clean());
+	lua_pushnumber(L, getGlobalGame().map.clean());
 	return 1;
 }
 
@@ -904,7 +904,7 @@ int luaIsInWar(lua_State* L)
 int luaGetWaypointPositionByName(lua_State* L)
 {
 	// getWaypointPositionByName(name)
-	auto& waypoints = g_game->map.waypoints;
+	auto& waypoints = getGlobalGame().map.waypoints;
 
 	auto it = waypoints.find(tfs::lua::getString(L, -1));
 	if (it != waypoints.end()) {
@@ -1027,7 +1027,7 @@ int luaDatabaseAsyncExecute(lua_State* L)
 		int32_t ref = luaL_ref(L, LUA_REGISTRYINDEX);
 		auto scriptId = tfs::lua::getScriptEnv()->getScriptId();
 		callback = [ref, scriptId](DBResult_ptr, bool success) {
-			lua_State* luaState = g_luaEnvironment->getLuaState();
+			lua_State* luaState = getGlobalLuaEnvironment().getLuaState();
 			if (!luaState) {
 				return;
 			}
@@ -1040,8 +1040,8 @@ int luaDatabaseAsyncExecute(lua_State* L)
 			lua_rawgeti(luaState, LUA_REGISTRYINDEX, ref);
 			tfs::lua::pushBoolean(luaState, success);
 			auto env = tfs::lua::getScriptEnv();
-			env->setScriptId(scriptId, g_luaEnvironment);
-			g_luaEnvironment->callFunction(1);
+			env->setScriptId(scriptId, &getGlobalLuaEnvironment());
+			getGlobalLuaEnvironment().callFunction(1);
 
 			luaL_unref(luaState, LUA_REGISTRYINDEX, ref);
 		};
@@ -1067,7 +1067,7 @@ int luaDatabaseAsyncStoreQuery(lua_State* L)
 		int32_t ref = luaL_ref(L, LUA_REGISTRYINDEX);
 		auto scriptId = tfs::lua::getScriptEnv()->getScriptId();
 		callback = [ref, scriptId](DBResult_ptr result, bool) {
-			lua_State* luaState = g_luaEnvironment->getLuaState();
+			lua_State* luaState = getGlobalLuaEnvironment().getLuaState();
 			if (!luaState) {
 				return;
 			}
@@ -1084,8 +1084,8 @@ int luaDatabaseAsyncStoreQuery(lua_State* L)
 				tfs::lua::pushBoolean(luaState, false);
 			}
 			auto env = tfs::lua::getScriptEnv();
-			env->setScriptId(scriptId, g_luaEnvironment);
-			g_luaEnvironment->callFunction(1);
+			env->setScriptId(scriptId, &getGlobalLuaEnvironment());
+			getGlobalLuaEnvironment().callFunction(1);
 
 			luaL_unref(luaState, LUA_REGISTRYINDEX, ref);
 		};
@@ -1497,4 +1497,13 @@ void LuaEnvironment::executeTimerEvent(uint32_t eventIndex)
 	for (auto parameter : timerEventDesc.parameters) {
 		luaL_unref(luaState, LUA_REGISTRYINDEX, parameter);
 	}
+}
+
+LuaEnvironment& getGlobalLuaEnvironment()
+{
+	static LuaEnvironment g_luaEnvironment;
+	if (!g_luaEnvironment.getLuaState()) {
+		g_luaEnvironment.initState();
+	}
+	return g_luaEnvironment;
 }

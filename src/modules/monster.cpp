@@ -19,7 +19,7 @@ int luaMonsterCreate(lua_State* L)
 	// Monster(id or userdata)
 	Monster* monster;
 	if (isNumber(L, 2)) {
-		monster = g_game->getMonsterByID(getNumber<uint32_t>(L, 2));
+		monster = getGlobalGame().getMonsterByID(getNumber<uint32_t>(L, 2));
 	} else if (lua_isuserdata(L, 2)) {
 		if (getUserdataType(L, 2) != LuaData_Monster) {
 			lua_pushnil(L);
@@ -429,4 +429,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("monster", registerFunctions);
+registerLuaModule("monster", registerFunctions, {"creature"});

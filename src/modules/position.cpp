@@ -94,7 +94,7 @@ int luaPositionIsSightClear(lua_State* L)
 	bool sameFloor = getBoolean(L, 3, true);
 	const Position& positionEx = getPosition(L, 2);
 	const Position& position = getPosition(L, 1);
-	pushBoolean(L, g_game->isSightClear(position, positionEx, sameFloor));
+	pushBoolean(L, getGlobalGame().isSightClear(position, positionEx, sameFloor));
 	return 1;
 }
 
@@ -119,7 +119,7 @@ int luaPositionSendMagicEffect(lua_State* L)
 	if (!spectators.empty()) {
 		Game::addMagicEffect(spectators, position, magicEffect);
 	} else {
-		g_game->addMagicEffect(position, magicEffect);
+		getGlobalGame().addMagicEffect(position, magicEffect);
 	}
 
 	pushBoolean(L, true);
@@ -143,7 +143,7 @@ int luaPositionSendDistanceEffect(lua_State* L)
 	if (!spectators.empty()) {
 		Game::addDistanceEffect(spectators, position, positionEx, distanceEffect);
 	} else {
-		g_game->addDistanceEffect(position, positionEx, distanceEffect);
+		getGlobalGame().addDistanceEffect(position, positionEx, distanceEffect);
 	}
 
 	pushBoolean(L, true);
@@ -177,4 +177,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("position", registerFunctions);
+registerLuaModule("position", registerFunctions, {});

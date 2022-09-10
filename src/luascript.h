@@ -147,4 +147,6 @@ private:
 	friend class CombatSpell;
 };
 
+LuaEnvironment& getGlobalLuaEnvironment();
+
 #endif // FS_LUASCRIPT_H

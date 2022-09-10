@@ -1705,4 +1705,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("monsters", registerFunctions);
+registerLuaModule("monsters", registerFunctions, {});

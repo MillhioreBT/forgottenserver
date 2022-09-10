@@ -105,4 +105,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("configmanager", registerFunctions);
+registerLuaModule("configmanager", registerFunctions, {});

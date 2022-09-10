@@ -26,8 +26,6 @@ MoveEvents* g_moveEvents = nullptr;
 Weapons* g_weapons = nullptr;
 Scripts* g_scripts = nullptr;
 
-extern LuaEnvironment* g_luaEnvironment;
-
 ScriptingManager::~ScriptingManager()
 {
 	delete g_events;
@@ -40,12 +38,11 @@ ScriptingManager::~ScriptingManager()
 	delete g_creatureEvents;
 	delete g_globalEvents;
 	delete g_scripts;
-	delete g_luaEnvironment;
 }
 
 bool ScriptingManager::loadScriptSystems()
 {
-	if (g_luaEnvironment->loadFile("data/global.lua") == -1) {
+	if (getGlobalLuaEnvironment().loadFile("data/global.lua") == -1) {
 		std::cout << "[Warning - ScriptingManager::loadScriptSystems] Can not load data/global.lua" << std::endl;
 	}
 

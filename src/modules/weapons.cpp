@@ -687,4 +687,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("weapons", registerFunctions);
+registerLuaModule("weapons", registerFunctions, {});

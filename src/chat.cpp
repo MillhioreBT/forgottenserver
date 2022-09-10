@@ -81,7 +81,7 @@ bool ChatChannel::addUser(Player& player)
 		Guild* guild = player.getGuild();
 		if (guild && !guild->getMotd().empty()) {
 			g_scheduler.addEvent(
-			    createSchedulerTask(150, [playerID = player.getID()]() { g_game->sendGuildMotd(playerID); }));
+			    createSchedulerTask(150, [playerID = player.getID()]() { getGlobalGame().sendGuildMotd(playerID); }));
 		}
 	}
 

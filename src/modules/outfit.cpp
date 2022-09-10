@@ -39,4 +39,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("outfit", registerFunctions);
+registerLuaModule("outfit", registerFunctions, {});

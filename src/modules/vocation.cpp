@@ -339,4 +339,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("vocation", registerFunctions);
+registerLuaModule("vocation", registerFunctions, {});

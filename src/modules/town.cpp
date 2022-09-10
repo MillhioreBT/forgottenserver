@@ -19,9 +19,9 @@ int luaTownCreate(lua_State* L)
 	// Town(id or name)
 	Town* town;
 	if (isNumber(L, 2)) {
-		town = g_game->map.towns.getTown(getNumber<uint32_t>(L, 2));
+		town = getGlobalGame().map.towns.getTown(getNumber<uint32_t>(L, 2));
 	} else if (lua_isstring(L, 2)) {
-		town = g_game->map.towns.getTown(getString(L, 2));
+		town = getGlobalGame().map.towns.getTown(getString(L, 2));
 	} else {
 		town = nullptr;
 	}
@@ -83,4 +83,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("town", registerFunctions);
+registerLuaModule("town", registerFunctions, {});

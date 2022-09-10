@@ -150,4 +150,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("creatureevent", registerFunctions);
+registerLuaModule("creatureevent", registerFunctions, {});

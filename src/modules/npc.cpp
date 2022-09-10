@@ -2,10 +2,10 @@
 
 #include "../npc.h"
 
+#include "../game.h"
 #include "../luaapi.h"
 #include "../luaenv.h"
 #include "../luameta.h"
-#include "../game.h"
 #include "../luascript.h"
 #include "luaregister.h"
 
@@ -21,9 +21,9 @@ int luaNpcCreate(lua_State* L)
 	Npc* npc;
 	if (lua_gettop(L) >= 2) {
 		if (isNumber(L, 2)) {
-			npc = g_game->getNpcByID(getNumber<uint32_t>(L, 2));
+			npc = getGlobalGame().getNpcByID(getNumber<uint32_t>(L, 2));
 		} else if (lua_isstring(L, 2)) {
-			npc = g_game->getNpcByName(getString(L, 2));
+			npc = getGlobalGame().getNpcByName(getString(L, 2));
 		} else if (lua_isuserdata(L, 2)) {
 			if (getUserdataType(L, 2) != LuaData_Npc) {
 				lua_pushnil(L);
@@ -120,4 +120,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("npc", registerFunctions);
+registerLuaModule("npc", registerFunctions, {"creature"});

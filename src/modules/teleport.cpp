@@ -63,4 +63,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("teleport", registerFunctions);
+registerLuaModule("teleport", registerFunctions, {"item"});

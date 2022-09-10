@@ -194,4 +194,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("globalevent", registerFunctions);
+registerLuaModule("globalevent", registerFunctions, {});

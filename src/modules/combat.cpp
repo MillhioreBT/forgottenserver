@@ -21,7 +21,7 @@ using namespace tfs::lua;
 int luaCombatCreate(lua_State* L)
 {
 	// Combat()
-	pushSharedPtr(L, g_luaEnvironment->createCombatObject(getScriptEnv()->getScriptInterface()));
+	pushSharedPtr(L, getGlobalLuaEnvironment().createCombatObject(getScriptEnv()->getScriptInterface()));
 	setMetatable(L, -1, "Combat");
 	return 1;
 }
@@ -106,7 +106,7 @@ int luaCombatSetArea(lua_State* L)
 		return 1;
 	}
 
-	const AreaCombat* area = g_luaEnvironment->getAreaObject(getNumber<uint32_t>(L, 2));
+	const AreaCombat* area = getGlobalLuaEnvironment().getAreaObject(getNumber<uint32_t>(L, 2));
 	if (!area) {
 		reportErrorFunc(L, getErrorDesc(LUA_ERROR_AREA_NOT_FOUND));
 		lua_pushnil(L);
@@ -225,7 +225,7 @@ int luaCombatExecute(lua_State* L)
 	const LuaVariant& variant = getVariant(L, 3);
 	switch (variant.type()) {
 		case VARIANT_NUMBER: {
-			Creature* target = g_game->getCreatureByID(variant.getNumber());
+			Creature* target = getGlobalGame().getCreatureByID(variant.getNumber());
 			if (!target) {
 				pushBoolean(L, false);
 				return 1;
@@ -249,13 +249,13 @@ int luaCombatExecute(lua_State* L)
 				combat->doCombat(creature, variant.getTargetPosition());
 			} else {
 				combat->postCombatEffects(creature, variant.getTargetPosition());
-				g_game->addMagicEffect(variant.getTargetPosition(), CONST_ME_POFF);
+				getGlobalGame().addMagicEffect(variant.getTargetPosition(), CONST_ME_POFF);
 			}
 			break;
 		}
 
 		case VARIANT_STRING: {
-			Player* target = g_game->getPlayerByName(variant.getString());
+			Player* target = getGlobalGame().getPlayerByName(variant.getString());
 			if (!target) {
 				pushBoolean(L, false);
 				return 1;
@@ -303,4 +303,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("combat", registerFunctions);
+registerLuaModule("combat", registerFunctions, {});

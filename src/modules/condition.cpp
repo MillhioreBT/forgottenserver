@@ -265,4 +265,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("condition", registerFunctions);
+registerLuaModule("condition", registerFunctions, {});

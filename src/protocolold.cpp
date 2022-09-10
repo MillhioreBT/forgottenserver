@@ -22,7 +22,7 @@ void ProtocolOld::disconnectClient(const std::string& message)
 
 void ProtocolOld::onRecvFirstMessage(NetworkMessage& msg)
 {
-	if (g_game->getGameState() == GAME_STATE_SHUTDOWN) {
+	if (getGlobalGame().getGameState() == GAME_STATE_SHUTDOWN) {
 		disconnect();
 		return;
 	}

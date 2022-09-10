@@ -5,7 +5,8 @@ class LuaScriptInterface;
 
 namespace tfs::lua {
 
-void registerModule(std::string_view moduleName, std::function<void(LuaScriptInterface&)> init);
+void registerModule(std::string_view moduleName, std::function<void(LuaScriptInterface&)> init,
+                    const std::vector<std::string_view>& dependencies = {});
 void importModules(LuaScriptInterface& lsi);
 
 } // namespace tfs::lua
@@ -16,9 +17,9 @@ void importModules(LuaScriptInterface& lsi);
 		lsi.registerGlobalVariable(enumName.substr(enumName.find_last_of(':') + 1), value); \
 	}
 
-#define registerLuaModule(moduleName, init) \
+#define registerLuaModule(moduleName, init, dependencies) \
 	static auto __module__ = ([]() { \
-		tfs::lua::registerModule(moduleName, init); \
+		tfs::lua::registerModule(moduleName, init, dependencies); \
 		return nullptr; \
 	})();
 

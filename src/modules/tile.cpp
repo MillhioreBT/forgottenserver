@@ -23,12 +23,12 @@ int luaTileCreate(lua_State* L)
 	// Tile(position)
 	Tile* tile;
 	if (lua_istable(L, 2)) {
-		tile = g_game->map.getTile(getPosition(L, 2));
+		tile = getGlobalGame().map.getTile(getPosition(L, 2));
 	} else {
 		uint8_t z = getNumber<uint8_t>(L, 4);
 		uint16_t y = getNumber<uint16_t>(L, 3);
 		uint16_t x = getNumber<uint16_t>(L, 2);
-		tile = g_game->map.getTile(x, y, z);
+		tile = getGlobalGame().map.getTile(x, y, z);
 	}
 
 	if (tile) {
@@ -49,11 +49,11 @@ int luaTileRemove(lua_State* L)
 		return 1;
 	}
 
-	if (g_game->isTileInCleanList(tile)) {
-		g_game->removeTileToClean(tile);
+	if (getGlobalGame().isTileInCleanList(tile)) {
+		getGlobalGame().removeTileToClean(tile);
 	}
 
-	g_game->map.removeTile(tile->getPosition());
+	getGlobalGame().map.removeTile(tile->getPosition());
 	pushBoolean(L, true);
 	return 1;
 }
@@ -229,7 +229,7 @@ int luaTileGetItemById(lua_State* L)
 	}
 	int32_t subType = getNumber<int32_t>(L, 3, -1);
 
-	Item* item = g_game->findItemOfType(tile, itemId, false, subType);
+	Item* item = getGlobalGame().findItemOfType(tile, itemId, false, subType);
 	if (item) {
 		pushUserdata<Item>(L, item);
 		setItemMetatable(L, -1, item);
@@ -650,7 +650,7 @@ int luaTileAddItem(lua_State* L)
 
 	uint32_t flags = getNumber<uint32_t>(L, 4, 0);
 
-	ReturnValue ret = g_game->internalAddItem(tile, item, INDEX_WHEREEVER, flags);
+	ReturnValue ret = getGlobalGame().internalAddItem(tile, item, INDEX_WHEREEVER, flags);
 	if (ret == RETURNVALUE_NOERROR) {
 		pushUserdata<Item>(L, item);
 		setItemMetatable(L, -1, item);
@@ -683,7 +683,7 @@ int luaTileAddItemEx(lua_State* L)
 	}
 
 	uint32_t flags = getNumber<uint32_t>(L, 3, 0);
-	ReturnValue ret = g_game->internalAddItem(tile, item, INDEX_WHEREEVER, flags);
+	ReturnValue ret = getGlobalGame().internalAddItem(tile, item, INDEX_WHEREEVER, flags);
 	if (ret == RETURNVALUE_NOERROR) {
 		ScriptEnvironment::removeTempItem(item);
 	}
@@ -793,4 +793,4 @@ void registerFunctions(LuaScriptInterface& lsi)
 
 } // namespace
 
-registerLuaModule("tile", registerFunctions);
+registerLuaModule("tile", registerFunctions, {});
