@@ -17,16 +17,16 @@ int luaVocationCreate(lua_State* L)
 {
 	// Vocation(id or name)
 	uint32_t id;
-	if (tfs::lua::isNumber(L, 2)) {
-		id = tfs::lua::getNumber<uint32_t>(L, 2);
+	if (isNumber(L, 2)) {
+		id = getNumber<uint32_t>(L, 2);
 	} else {
-		id = g_vocations.getVocationId(tfs::lua::getString(L, 2));
+		id = g_vocations.getVocationId(getString(L, 2));
 	}
 
 	Vocation* vocation = g_vocations.getVocation(id);
 	if (vocation) {
-		tfs::lua::pushUserdata<Vocation>(L, vocation);
-		tfs::lua::setMetatable(L, -1, "Vocation");
+		pushUserdata<Vocation>(L, vocation);
+		setMetatable(L, -1, "Vocation");
 	} else {
 		lua_pushnil(L);
 	}
@@ -36,7 +36,7 @@ int luaVocationCreate(lua_State* L)
 int luaVocationGetId(lua_State* L)
 {
 	// vocation:getId()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
 		lua_pushnumber(L, vocation->getId());
 	} else {
@@ -48,7 +48,7 @@ int luaVocationGetId(lua_State* L)
 int luaVocationGetClientId(lua_State* L)
 {
 	// vocation:getClientId()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
 		lua_pushnumber(L, vocation->getClientId());
 	} else {
@@ -60,9 +60,9 @@ int luaVocationGetClientId(lua_State* L)
 int luaVocationGetName(lua_State* L)
 {
 	// vocation:getName()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
-		tfs::lua::pushString(L, vocation->getVocName());
+		pushString(L, vocation->getVocName());
 	} else {
 		lua_pushnil(L);
 	}
@@ -72,9 +72,9 @@ int luaVocationGetName(lua_State* L)
 int luaVocationGetDescription(lua_State* L)
 {
 	// vocation:getDescription()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
-		tfs::lua::pushString(L, vocation->getVocDescription());
+		pushString(L, vocation->getVocDescription());
 	} else {
 		lua_pushnil(L);
 	}
@@ -84,10 +84,10 @@ int luaVocationGetDescription(lua_State* L)
 int luaVocationGetRequiredSkillTries(lua_State* L)
 {
 	// vocation:getRequiredSkillTries(skillType, skillLevel)
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
-		skills_t skillType = tfs::lua::getNumber<skills_t>(L, 2);
-		uint16_t skillLevel = tfs::lua::getNumber<uint16_t>(L, 3);
+		skills_t skillType = getNumber<skills_t>(L, 2);
+		uint16_t skillLevel = getNumber<uint16_t>(L, 3);
 		lua_pushnumber(L, vocation->getReqSkillTries(skillType, skillLevel));
 	} else {
 		lua_pushnil(L);
@@ -98,9 +98,9 @@ int luaVocationGetRequiredSkillTries(lua_State* L)
 int luaVocationGetRequiredManaSpent(lua_State* L)
 {
 	// vocation:getRequiredManaSpent(magicLevel)
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
-		uint32_t magicLevel = tfs::lua::getNumber<uint32_t>(L, 2);
+		uint32_t magicLevel = getNumber<uint32_t>(L, 2);
 		lua_pushnumber(L, vocation->getReqMana(magicLevel));
 	} else {
 		lua_pushnil(L);
@@ -111,7 +111,7 @@ int luaVocationGetRequiredManaSpent(lua_State* L)
 int luaVocationGetCapacityGain(lua_State* L)
 {
 	// vocation:getCapacityGain()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
 		lua_pushnumber(L, vocation->getCapGain());
 	} else {
@@ -123,7 +123,7 @@ int luaVocationGetCapacityGain(lua_State* L)
 int luaVocationGetHealthGain(lua_State* L)
 {
 	// vocation:getHealthGain()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
 		lua_pushnumber(L, vocation->getHPGain());
 	} else {
@@ -135,7 +135,7 @@ int luaVocationGetHealthGain(lua_State* L)
 int luaVocationGetHealthGainTicks(lua_State* L)
 {
 	// vocation:getHealthGainTicks()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
 		lua_pushnumber(L, vocation->getHealthGainTicks());
 	} else {
@@ -147,7 +147,7 @@ int luaVocationGetHealthGainTicks(lua_State* L)
 int luaVocationGetHealthGainAmount(lua_State* L)
 {
 	// vocation:getHealthGainAmount()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
 		lua_pushnumber(L, vocation->getHealthGainAmount());
 	} else {
@@ -159,7 +159,7 @@ int luaVocationGetHealthGainAmount(lua_State* L)
 int luaVocationGetManaGain(lua_State* L)
 {
 	// vocation:getManaGain()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
 		lua_pushnumber(L, vocation->getManaGain());
 	} else {
@@ -171,7 +171,7 @@ int luaVocationGetManaGain(lua_State* L)
 int luaVocationGetManaGainTicks(lua_State* L)
 {
 	// vocation:getManaGainTicks()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
 		lua_pushnumber(L, vocation->getManaGainTicks());
 	} else {
@@ -183,7 +183,7 @@ int luaVocationGetManaGainTicks(lua_State* L)
 int luaVocationGetManaGainAmount(lua_State* L)
 {
 	// vocation:getManaGainAmount()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
 		lua_pushnumber(L, vocation->getManaGainAmount());
 	} else {
@@ -195,7 +195,7 @@ int luaVocationGetManaGainAmount(lua_State* L)
 int luaVocationGetMaxSoul(lua_State* L)
 {
 	// vocation:getMaxSoul()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
 		lua_pushnumber(L, vocation->getSoulMax());
 	} else {
@@ -207,7 +207,7 @@ int luaVocationGetMaxSoul(lua_State* L)
 int luaVocationGetSoulGainTicks(lua_State* L)
 {
 	// vocation:getSoulGainTicks()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
 		lua_pushnumber(L, vocation->getSoulGainTicks());
 	} else {
@@ -219,7 +219,7 @@ int luaVocationGetSoulGainTicks(lua_State* L)
 int luaVocationGetAttackSpeed(lua_State* L)
 {
 	// vocation:getAttackSpeed()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
 		lua_pushnumber(L, vocation->getAttackSpeed());
 	} else {
@@ -231,7 +231,7 @@ int luaVocationGetAttackSpeed(lua_State* L)
 int luaVocationGetBaseSpeed(lua_State* L)
 {
 	// vocation:getBaseSpeed()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
 		lua_pushnumber(L, vocation->getBaseSpeed());
 	} else {
@@ -243,7 +243,7 @@ int luaVocationGetBaseSpeed(lua_State* L)
 int luaVocationGetDemotion(lua_State* L)
 {
 	// vocation:getDemotion()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (!vocation) {
 		lua_pushnil(L);
 		return 1;
@@ -257,8 +257,8 @@ int luaVocationGetDemotion(lua_State* L)
 
 	Vocation* demotedVocation = g_vocations.getVocation(fromId);
 	if (demotedVocation && demotedVocation != vocation) {
-		tfs::lua::pushUserdata<Vocation>(L, demotedVocation);
-		tfs::lua::setMetatable(L, -1, "Vocation");
+		pushUserdata<Vocation>(L, demotedVocation);
+		setMetatable(L, -1, "Vocation");
 	} else {
 		lua_pushnil(L);
 	}
@@ -268,7 +268,7 @@ int luaVocationGetDemotion(lua_State* L)
 int luaVocationGetPromotion(lua_State* L)
 {
 	// vocation:getPromotion()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (!vocation) {
 		lua_pushnil(L);
 		return 1;
@@ -282,8 +282,8 @@ int luaVocationGetPromotion(lua_State* L)
 
 	Vocation* promotedVocation = g_vocations.getVocation(promotedId);
 	if (promotedVocation && promotedVocation != vocation) {
-		tfs::lua::pushUserdata<Vocation>(L, promotedVocation);
-		tfs::lua::setMetatable(L, -1, "Vocation");
+		pushUserdata<Vocation>(L, promotedVocation);
+		setMetatable(L, -1, "Vocation");
 	} else {
 		lua_pushnil(L);
 	}
@@ -293,9 +293,9 @@ int luaVocationGetPromotion(lua_State* L)
 int luaVocationAllowsPvp(lua_State* L)
 {
 	// vocation:allowsPvp()
-	Vocation* vocation = tfs::lua::getUserdata<Vocation>(L, 1);
+	Vocation* vocation = getUserdata<Vocation>(L, 1);
 	if (vocation) {
-		tfs::lua::pushBoolean(L, vocation->allowsPvp());
+		pushBoolean(L, vocation->allowsPvp());
 	} else {
 		lua_pushnil(L);
 	}
@@ -305,7 +305,7 @@ int luaVocationAllowsPvp(lua_State* L)
 void registerFunctions(LuaScriptInterface& lsi)
 {
 	lsi.registerClass("Vocation", "", luaVocationCreate);
-	lsi.registerMetaMethod("Vocation", "__eq", tfs::lua::luaUserdataCompare);
+	lsi.registerMetaMethod("Vocation", "__eq", luaUserdataCompare);
 
 	lsi.registerMethod("Vocation", "getId", luaVocationGetId);
 	lsi.registerMethod("Vocation", "getClientId", luaVocationGetClientId);

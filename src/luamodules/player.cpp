@@ -30,17 +30,17 @@ int luaDoPlayerAddItem(lua_State* L)
 	// doPlayerAddItem(cid, itemid, <optional: default: 1> count/subtype, <optional: default: 1> canDropOnMap)
 	// doPlayerAddItem(cid, itemid, <optional: default: 1> count, <optional: default: 1> canDropOnMap, <optional:
 	// default: 1>subtype)
-	Player* player = tfs::lua::getPlayer(L, 1);
+	Player* player = getPlayer(L, 1);
 	if (!player) {
-		reportErrorFunc(L, tfs::lua::getErrorDesc(tfs::lua::LUA_ERROR_PLAYER_NOT_FOUND));
-		tfs::lua::pushBoolean(L, false);
+		reportErrorFunc(L, getErrorDesc(LUA_ERROR_PLAYER_NOT_FOUND));
+		pushBoolean(L, false);
 		return 1;
 	}
 
-	uint16_t itemId = tfs::lua::getNumber<uint16_t>(L, 2);
-	int32_t count = tfs::lua::getNumber<int32_t>(L, 3, 1);
-	bool canDropOnMap = tfs::lua::getBoolean(L, 4, true);
-	uint16_t subType = tfs::lua::getNumber<uint16_t>(L, 5, 1);
+	uint16_t itemId = getNumber<uint16_t>(L, 2);
+	int32_t count = getNumber<int32_t>(L, 3, 1);
+	bool canDropOnMap = getBoolean(L, 4, true);
+	uint16_t subType = getNumber<uint16_t>(L, 5, 1);
 
 	const ItemType& it = Item::items[itemId];
 	int32_t itemCount;
@@ -68,8 +68,8 @@ int luaDoPlayerAddItem(lua_State* L)
 
 		Item* newItem = Item::CreateItem(itemId, stackCount);
 		if (!newItem) {
-			reportErrorFunc(L, tfs::lua::getErrorDesc(tfs::lua::LUA_ERROR_ITEM_NOT_FOUND));
-			tfs::lua::pushBoolean(L, false);
+			reportErrorFunc(L, getErrorDesc(LUA_ERROR_ITEM_NOT_FOUND));
+			pushBoolean(L, false);
 			return 1;
 		}
 
@@ -80,24 +80,24 @@ int luaDoPlayerAddItem(lua_State* L)
 		ReturnValue ret = getGlobalGame().internalPlayerAddItem(player, newItem, canDropOnMap);
 		if (ret != RETURNVALUE_NOERROR) {
 			delete newItem;
-			tfs::lua::pushBoolean(L, false);
+			pushBoolean(L, false);
 			return 1;
 		}
 
 		if (--itemCount == 0) {
 			if (newItem->getParent()) {
-				uint32_t uid = tfs::lua::getScriptEnv()->addThing(newItem);
+				uint32_t uid = getScriptEnv()->addThing(newItem);
 				lua_pushnumber(L, uid);
 				return 1;
 			} else {
 				// stackable item stacked with existing object, newItem will be released
-				tfs::lua::pushBoolean(L, false);
+				pushBoolean(L, false);
 				return 1;
 			}
 		}
 	}
 
-	tfs::lua::pushBoolean(L, false);
+	pushBoolean(L, false);
 	return 1;
 }
 

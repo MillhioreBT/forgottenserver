@@ -492,20 +492,22 @@ int32_t Weapon::getHealthCost(const Player* player) const
 bool Weapon::executeUseWeapon(Player* player, const LuaVariant& var) const
 {
 	// onUseWeapon(player, var)
-	if (!tfs::lua::reserveScriptEnv()) {
+	using namespace tfs;
+
+	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - Weapon::executeUseWeapon] Call stack overflow" << std::endl;
 		return false;
 	}
 
-	tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
+	lua::ScriptEnvironment* env = lua::getScriptEnv();
 	env->setScriptId(scriptId, scriptInterface);
 
 	lua_State* L = scriptInterface->getLuaState();
 
 	scriptInterface->pushFunction(scriptId);
-	tfs::lua::pushUserdata<Player>(L, player);
-	tfs::lua::setMetatable(L, -1, "Player");
-	tfs::lua::pushVariant(L, var);
+	lua::pushUserdata<Player>(L, player);
+	lua::setMetatable(L, -1, "Player");
+	lua::pushVariant(L, var);
 
 	return scriptInterface->callFunction(2);
 }

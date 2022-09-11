@@ -74,6 +74,8 @@ int32_t DatabaseManager::getDatabaseVersion()
 
 void DatabaseManager::updateDatabase()
 {
+	using namespace tfs;
+
 	lua_State* L = luaL_newstate();
 	if (!L) {
 		return;
@@ -101,20 +103,20 @@ void DatabaseManager::updateDatabase()
 			break;
 		}
 
-		if (!tfs::lua::reserveScriptEnv()) {
+		if (!lua::reserveScriptEnv()) {
 			break;
 		}
 
 		lua_getglobal(L, "onUpdateDatabase");
 		if (lua_pcall(L, 0, 1, 0) != 0) {
-			tfs::lua::resetScriptEnv();
+			lua::resetScriptEnv();
 			std::cout << "[Error - DatabaseManager::updateDatabase - Version: " << version << "] "
 			          << lua_tostring(L, -1) << std::endl;
 			break;
 		}
 
-		if (!tfs::lua::getBoolean(L, -1, false)) {
-			tfs::lua::resetScriptEnv();
+		if (!lua::getBoolean(L, -1, false)) {
+			lua::resetScriptEnv();
 			break;
 		}
 
@@ -122,7 +124,7 @@ void DatabaseManager::updateDatabase()
 		std::cout << "> Database has been updated to version " << version << '.' << std::endl;
 		registerDatabaseConfig("db_version", version);
 
-		tfs::lua::resetScriptEnv();
+		lua::resetScriptEnv();
 	} while (true);
 	lua_close(L);
 }

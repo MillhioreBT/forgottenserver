@@ -676,19 +676,23 @@ bool MoveEvent::configureEvent(const pugi::xml_node& node)
 
 uint32_t MoveEvent::StepInField(Creature* creature, Item* item, const Position&)
 {
+	using namespace tfs;
+
 	MagicField* field = item->getMagicField();
 	if (field) {
 		field->onStepInField(creature);
 		return 1;
 	}
 
-	return tfs::lua::LUA_ERROR_ITEM_NOT_FOUND;
+	return lua::LUA_ERROR_ITEM_NOT_FOUND;
 }
 
 uint32_t MoveEvent::StepOutField(Creature*, Item*, const Position&) { return 1; }
 
 uint32_t MoveEvent::AddItemField(Item* item, Item*, const Position&)
 {
+	using namespace tfs;
+
 	if (MagicField* field = item->getMagicField()) {
 		Tile* tile = item->getTile();
 		if (CreatureVector* creatures = tile->getCreatures()) {
@@ -698,7 +702,7 @@ uint32_t MoveEvent::AddItemField(Item* item, Item*, const Position&)
 		}
 		return 1;
 	}
-	return tfs::lua::LUA_ERROR_ITEM_NOT_FOUND;
+	return lua::LUA_ERROR_ITEM_NOT_FOUND;
 }
 
 uint32_t MoveEvent::RemoveItemField(Item*, Item*, const Position&) { return 1; }
@@ -975,22 +979,24 @@ bool MoveEvent::executeStep(Creature* creature, Item* item, const Position& pos)
 {
 	// onStepIn(creature, item, pos, fromPosition)
 	// onStepOut(creature, item, pos, fromPosition)
-	if (!tfs::lua::reserveScriptEnv()) {
+	using namespace tfs;
+
+	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - MoveEvent::executeStep] Call stack overflow" << std::endl;
 		return false;
 	}
 
-	tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
+	lua::ScriptEnvironment* env = lua::getScriptEnv();
 	env->setScriptId(scriptId, scriptInterface);
 
 	lua_State* L = scriptInterface->getLuaState();
 
 	scriptInterface->pushFunction(scriptId);
-	tfs::lua::pushUserdata<Creature>(L, creature);
-	tfs::lua::setCreatureMetatable(L, -1, creature);
-	tfs::lua::pushThing(L, item);
-	tfs::lua::pushPosition(L, pos);
-	tfs::lua::pushPosition(L, creature->getLastPosition());
+	lua::pushUserdata<Creature>(L, creature);
+	lua::setCreatureMetatable(L, -1, creature);
+	lua::pushThing(L, item);
+	lua::pushPosition(L, pos);
+	lua::pushPosition(L, creature->getLastPosition());
 
 	return scriptInterface->callFunction(4);
 }
@@ -1011,22 +1017,24 @@ bool MoveEvent::executeEquip(Player* player, Item* item, slots_t slot, bool isCh
 {
 	// onEquip(player, item, slot, isCheck)
 	// onDeEquip(player, item, slot, isCheck)
-	if (!tfs::lua::reserveScriptEnv()) {
+	using namespace tfs;
+
+	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - MoveEvent::executeEquip] Call stack overflow" << std::endl;
 		return false;
 	}
 
-	tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
+	lua::ScriptEnvironment* env = lua::getScriptEnv();
 	env->setScriptId(scriptId, scriptInterface);
 
 	lua_State* L = scriptInterface->getLuaState();
 
 	scriptInterface->pushFunction(scriptId);
-	tfs::lua::pushUserdata<Player>(L, player);
-	tfs::lua::setMetatable(L, -1, "Player");
-	tfs::lua::pushThing(L, item);
+	lua::pushUserdata<Player>(L, player);
+	lua::setMetatable(L, -1, "Player");
+	lua::pushThing(L, item);
 	lua_pushnumber(L, slot);
-	tfs::lua::pushBoolean(L, isCheck);
+	lua::pushBoolean(L, isCheck);
 
 	return scriptInterface->callFunction(4);
 }
@@ -1043,20 +1051,22 @@ bool MoveEvent::executeAddRemItem(Item* item, Item* tileItem, const Position& po
 {
 	// onaddItem(moveitem, tileitem, pos)
 	// onRemoveItem(moveitem, tileitem, pos)
-	if (!tfs::lua::reserveScriptEnv()) {
+	using namespace tfs;
+
+	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - MoveEvent::executeAddRemItem] Call stack overflow" << std::endl;
 		return false;
 	}
 
-	tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
+	lua::ScriptEnvironment* env = lua::getScriptEnv();
 	env->setScriptId(scriptId, scriptInterface);
 
 	lua_State* L = scriptInterface->getLuaState();
 
 	scriptInterface->pushFunction(scriptId);
-	tfs::lua::pushThing(L, item);
-	tfs::lua::pushThing(L, tileItem);
-	tfs::lua::pushPosition(L, pos);
+	lua::pushThing(L, item);
+	lua::pushThing(L, tileItem);
+	lua::pushPosition(L, pos);
 
 	return scriptInterface->callFunction(3);
 }

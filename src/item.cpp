@@ -226,7 +226,9 @@ void Item::setDefaultSubtype()
 
 void Item::onRemoved()
 {
-	tfs::lua::ScriptEnvironment::removeTempItem(this);
+	using namespace tfs;
+
+	lua::ScriptEnvironment::removeTempItem(this);
 
 	if (hasAttribute(ITEM_ATTRIBUTE_UNIQUEID)) {
 		getGlobalGame().removeUniqueItem(getUniqueId());

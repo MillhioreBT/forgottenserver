@@ -144,23 +144,25 @@ std::string TalkAction::getScriptEventName() const { return "onSay"; }
 bool TalkAction::executeSay(Player* player, const std::string& words, const std::string& param, SpeakClasses type) const
 {
 	// onSay(player, words, param, type)
-	if (!tfs::lua::reserveScriptEnv()) {
+	using namespace tfs;
+
+	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - TalkAction::executeSay] Call stack overflow" << std::endl;
 		return false;
 	}
 
-	tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
+	lua::ScriptEnvironment* env = lua::getScriptEnv();
 	env->setScriptId(scriptId, scriptInterface);
 
 	lua_State* L = scriptInterface->getLuaState();
 
 	scriptInterface->pushFunction(scriptId);
 
-	tfs::lua::pushUserdata<Player>(L, player);
-	tfs::lua::setMetatable(L, -1, "Player");
+	lua::pushUserdata<Player>(L, player);
+	lua::setMetatable(L, -1, "Player");
 
-	tfs::lua::pushString(L, words);
-	tfs::lua::pushString(L, param);
+	lua::pushString(L, words);
+	lua::pushString(L, param);
 	lua_pushnumber(L, type);
 
 	return scriptInterface->callFunction(4);

@@ -563,12 +563,14 @@ std::string ScriptEvent::getScriptEventName() const { return "onRaid"; }
 bool ScriptEvent::executeEvent()
 {
 	// onRaid()
-	if (!tfs::lua::reserveScriptEnv()) {
+	using namespace tfs;
+
+	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - ScriptEvent::onRaid] Call stack overflow" << std::endl;
 		return false;
 	}
 
-	tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
+	lua::ScriptEnvironment* env = lua::getScriptEnv();
 	env->setScriptId(scriptId, scriptInterface);
 
 	scriptInterface->pushFunction(scriptId);

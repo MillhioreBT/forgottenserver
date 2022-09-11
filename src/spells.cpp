@@ -329,22 +329,24 @@ bool CombatSpell::castSpell(Creature* creature, Creature* target)
 bool CombatSpell::executeCastSpell(Creature* creature, const LuaVariant& var)
 {
 	// onCastSpell(creature, var)
-	if (!tfs::lua::reserveScriptEnv()) {
+	using namespace tfs;
+
+	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - CombatSpell::executeCastSpell] Call stack overflow" << std::endl;
 		return false;
 	}
 
-	tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
+	lua::ScriptEnvironment* env = lua::getScriptEnv();
 	env->setScriptId(scriptId, scriptInterface);
 
 	lua_State* L = scriptInterface->getLuaState();
 
 	scriptInterface->pushFunction(scriptId);
 
-	tfs::lua::pushUserdata<Creature>(L, creature);
-	tfs::lua::setCreatureMetatable(L, -1, creature);
+	lua::pushUserdata<Creature>(L, creature);
+	lua::setCreatureMetatable(L, -1, creature);
 
-	tfs::lua::pushVariant(L, var);
+	lua::pushVariant(L, var);
 
 	return scriptInterface->callFunction(2);
 }
@@ -1024,22 +1026,24 @@ bool InstantSpell::internalCastSpell(Creature* creature, const LuaVariant& var)
 bool InstantSpell::executeCastSpell(Creature* creature, const LuaVariant& var)
 {
 	// onCastSpell(creature, var)
-	if (!tfs::lua::reserveScriptEnv()) {
+	using namespace tfs;
+
+	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - InstantSpell::executeCastSpell] Call stack overflow" << std::endl;
 		return false;
 	}
 
-	tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
+	lua::ScriptEnvironment* env = lua::getScriptEnv();
 	env->setScriptId(scriptId, scriptInterface);
 
 	lua_State* L = scriptInterface->getLuaState();
 
 	scriptInterface->pushFunction(scriptId);
 
-	tfs::lua::pushUserdata<Creature>(L, creature);
-	tfs::lua::setCreatureMetatable(L, -1, creature);
+	lua::pushUserdata<Creature>(L, creature);
+	lua::setCreatureMetatable(L, -1, creature);
 
-	tfs::lua::pushVariant(L, var);
+	lua::pushVariant(L, var);
 
 	return scriptInterface->callFunction(2);
 }
@@ -1206,24 +1210,26 @@ bool RuneSpell::internalCastSpell(Creature* creature, const LuaVariant& var, boo
 bool RuneSpell::executeCastSpell(Creature* creature, const LuaVariant& var, bool isHotkey)
 {
 	// onCastSpell(creature, var, isHotkey)
-	if (!tfs::lua::reserveScriptEnv()) {
+	using namespace tfs;
+
+	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - RuneSpell::executeCastSpell] Call stack overflow" << std::endl;
 		return false;
 	}
 
-	tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
+	lua::ScriptEnvironment* env = lua::getScriptEnv();
 	env->setScriptId(scriptId, scriptInterface);
 
 	lua_State* L = scriptInterface->getLuaState();
 
 	scriptInterface->pushFunction(scriptId);
 
-	tfs::lua::pushUserdata<Creature>(L, creature);
-	tfs::lua::setCreatureMetatable(L, -1, creature);
+	lua::pushUserdata<Creature>(L, creature);
+	lua::setCreatureMetatable(L, -1, creature);
 
-	tfs::lua::pushVariant(L, var);
+	lua::pushVariant(L, var);
 
-	tfs::lua::pushBoolean(L, isHotkey);
+	lua::pushBoolean(L, isHotkey);
 
 	return scriptInterface->callFunction(3);
 }

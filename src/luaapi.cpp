@@ -24,8 +24,10 @@ bool isNumber(lua_State* L, int32_t arg) { return lua_type(L, arg) == LUA_TNUMBE
 
 int luaUserdataCompare(lua_State* L)
 {
+	using namespace tfs;
+
 	// userdataA == userdataB
-	tfs::lua::pushBoolean(L, tfs::lua::getUserdata<void>(L, 1) == tfs::lua::getUserdata<void>(L, 2));
+	lua::pushBoolean(L, lua::getUserdata<void>(L, 1) == lua::getUserdata<void>(L, 2));
 	return 1;
 }
 

@@ -16,13 +16,13 @@ using DBResultMap = std::map<uint32_t, DBResult_ptr>;
 static DBResultMap tempResults = {};
 static uint32_t lastResultId = 0;
 
-static std::multimap<tfs::lua::ScriptEnvironment*, Item*> tempItems = {};
+static std::multimap<ScriptEnvironment*, Item*> tempItems = {};
 
 /// Same as lua_pcall, but adds stack trace to error strings in called function.
 int protectedCall(lua_State* L, int nargs, int nresults)
 {
 	int error_index = lua_gettop(L) - nargs;
-	lua_pushcfunction(L, tfs::lua::luaErrorHandler);
+	lua_pushcfunction(L, luaErrorHandler);
 	lua_insert(L, error_index);
 
 	int ret = lua_pcall(L, nargs, nresults, error_index);

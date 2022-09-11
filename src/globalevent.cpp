@@ -325,12 +325,14 @@ std::string GlobalEvent::getScriptEventName() const
 bool GlobalEvent::executeRecord(uint32_t current, uint32_t old)
 {
 	// onRecord(current, old)
-	if (!tfs::lua::reserveScriptEnv()) {
+	using namespace tfs;
+
+	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - GlobalEvent::executeRecord] Call stack overflow" << std::endl;
 		return false;
 	}
 
-	tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
+	lua::ScriptEnvironment* env = lua::getScriptEnv();
 	env->setScriptId(scriptId, scriptInterface);
 
 	lua_State* L = scriptInterface->getLuaState();
@@ -343,12 +345,14 @@ bool GlobalEvent::executeRecord(uint32_t current, uint32_t old)
 
 bool GlobalEvent::executeEvent() const
 {
-	if (!tfs::lua::reserveScriptEnv()) {
+	using namespace tfs;
+
+	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - GlobalEvent::executeEvent] Call stack overflow" << std::endl;
 		return false;
 	}
 
-	tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
+	lua::ScriptEnvironment* env = lua::getScriptEnv();
 	env->setScriptId(scriptId, scriptInterface);
 	lua_State* L = scriptInterface->getLuaState();
 	scriptInterface->pushFunction(scriptId);

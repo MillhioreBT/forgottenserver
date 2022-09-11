@@ -1,4 +1,4 @@
-set(tfs_modules_SRC
+set(tfs_luamodules_SRC
 	${CMAKE_CURRENT_LIST_DIR}/actions.cpp
 	${CMAKE_CURRENT_LIST_DIR}/combat.cpp
 	${CMAKE_CURRENT_LIST_DIR}/condition.cpp
@@ -38,6 +38,6 @@ set(tfs_modules_SRC
 	${CMAKE_CURRENT_LIST_DIR}/xml.cpp
 	PARENT_SCOPE)
 
-set(tfs_modules_HDR
+set(tfs_luamodules_HDR
 	${CMAKE_CURRENT_LIST_DIR}/luaregister.h
 	PARENT_SCOPE)

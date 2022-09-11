@@ -565,27 +565,29 @@ bool Action::executeUse(Player* player, Item* item, const Position& fromPosition
                         const Position& toPosition, bool isHotkey)
 {
 	// onUse(player, item, fromPosition, target, toPosition, isHotkey)
-	if (!tfs::lua::reserveScriptEnv()) {
+	using namespace tfs;
+
+	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - Action::executeUse] Call stack overflow" << std::endl;
 		return false;
 	}
 
-	tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
+	lua::ScriptEnvironment* env = lua::getScriptEnv();
 	env->setScriptId(scriptId, scriptInterface);
 
 	lua_State* L = scriptInterface->getLuaState();
 
 	scriptInterface->pushFunction(scriptId);
 
-	tfs::lua::pushUserdata<Player>(L, player);
-	tfs::lua::setMetatable(L, -1, "Player");
+	lua::pushUserdata<Player>(L, player);
+	lua::setMetatable(L, -1, "Player");
 
-	tfs::lua::pushThing(L, item);
-	tfs::lua::pushPosition(L, fromPosition);
+	lua::pushThing(L, item);
+	lua::pushPosition(L, fromPosition);
 
-	tfs::lua::pushThing(L, target);
-	tfs::lua::pushPosition(L, toPosition);
+	lua::pushThing(L, target);
+	lua::pushPosition(L, toPosition);
 
-	tfs::lua::pushBoolean(L, isHotkey);
+	lua::pushBoolean(L, isHotkey);
 	return scriptInterface->callFunction(6);
 }

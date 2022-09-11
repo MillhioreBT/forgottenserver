@@ -72,6 +72,8 @@ namespace {
 
 ExperienceStages loadLuaStages(lua_State* L)
 {
+	using namespace tfs;
+
 	ExperienceStages stages;
 
 	lua_getglobal(L, "experienceStages");
@@ -82,9 +84,9 @@ ExperienceStages loadLuaStages(lua_State* L)
 	lua_pushnil(L);
 	while (lua_next(L, -2) != 0) {
 		const auto tableIndex = lua_gettop(L);
-		auto minLevel = tfs::lua::getField<uint32_t>(L, tableIndex, "minlevel");
-		auto maxLevel = tfs::lua::getField<uint32_t>(L, tableIndex, "maxlevel");
-		auto multiplier = tfs::lua::getField<float>(L, tableIndex, "multiplier");
+		auto minLevel = lua::getField<uint32_t>(L, tableIndex, "minlevel");
+		auto maxLevel = lua::getField<uint32_t>(L, tableIndex, "maxlevel");
+		auto multiplier = lua::getField<float>(L, tableIndex, "multiplier");
 		stages.emplace_back(minLevel, maxLevel, multiplier);
 		lua_pop(L, 4);
 	}

@@ -120,27 +120,29 @@ void Monster::onAttackedCreatureDisappear(bool) { attackTicks = 0; }
 
 void Monster::onCreatureAppear(Creature* creature, bool isLogin)
 {
+	using namespace tfs;
+
 	Creature::onCreatureAppear(creature, isLogin);
 
 	if (mType->info.creatureAppearEvent != -1) {
 		// onCreatureAppear(self, creature)
 		LuaScriptInterface* scriptInterface = mType->info.scriptInterface;
-		if (!tfs::lua::reserveScriptEnv()) {
+		if (!lua::reserveScriptEnv()) {
 			std::cout << "[Error - Monster::onCreatureAppear] Call stack overflow" << std::endl;
 			return;
 		}
 
-		tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
+		lua::ScriptEnvironment* env = lua::getScriptEnv();
 		env->setScriptId(mType->info.creatureAppearEvent, scriptInterface);
 
 		lua_State* L = scriptInterface->getLuaState();
 		scriptInterface->pushFunction(mType->info.creatureAppearEvent);
 
-		tfs::lua::pushUserdata<Monster>(L, this);
-		tfs::lua::setMetatable(L, -1, "Monster");
+		lua::pushUserdata<Monster>(L, this);
+		lua::setMetatable(L, -1, "Monster");
 
-		tfs::lua::pushUserdata<Creature>(L, creature);
-		tfs::lua::setCreatureMetatable(L, -1, creature);
+		lua::pushUserdata<Creature>(L, creature);
+		lua::setCreatureMetatable(L, -1, creature);
 
 		if (scriptInterface->callFunction(2)) {
 			return;
@@ -162,27 +164,29 @@ void Monster::onCreatureAppear(Creature* creature, bool isLogin)
 
 void Monster::onRemoveCreature(Creature* creature, bool isLogout)
 {
+	using namespace tfs;
+
 	Creature::onRemoveCreature(creature, isLogout);
 
 	if (mType->info.creatureDisappearEvent != -1) {
 		// onCreatureDisappear(self, creature)
 		LuaScriptInterface* scriptInterface = mType->info.scriptInterface;
-		if (!tfs::lua::reserveScriptEnv()) {
+		if (!lua::reserveScriptEnv()) {
 			std::cout << "[Error - Monster::onCreatureDisappear] Call stack overflow" << std::endl;
 			return;
 		}
 
-		tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
+		lua::ScriptEnvironment* env = lua::getScriptEnv();
 		env->setScriptId(mType->info.creatureDisappearEvent, scriptInterface);
 
 		lua_State* L = scriptInterface->getLuaState();
 		scriptInterface->pushFunction(mType->info.creatureDisappearEvent);
 
-		tfs::lua::pushUserdata<Monster>(L, this);
-		tfs::lua::setMetatable(L, -1, "Monster");
+		lua::pushUserdata<Monster>(L, this);
+		lua::setMetatable(L, -1, "Monster");
 
-		tfs::lua::pushUserdata<Creature>(L, creature);
-		tfs::lua::setCreatureMetatable(L, -1, creature);
+		lua::pushUserdata<Creature>(L, creature);
+		lua::setCreatureMetatable(L, -1, creature);
 
 		if (scriptInterface->callFunction(2)) {
 			return;
@@ -203,30 +207,32 @@ void Monster::onRemoveCreature(Creature* creature, bool isLogout)
 void Monster::onCreatureMove(Creature* creature, const Tile* newTile, const Position& newPos, const Tile* oldTile,
                              const Position& oldPos, bool teleport)
 {
+	using namespace tfs;
+
 	Creature::onCreatureMove(creature, newTile, newPos, oldTile, oldPos, teleport);
 
 	if (mType->info.creatureMoveEvent != -1) {
 		// onCreatureMove(self, creature, oldPosition, newPosition)
 		LuaScriptInterface* scriptInterface = mType->info.scriptInterface;
-		if (!tfs::lua::reserveScriptEnv()) {
+		if (!lua::reserveScriptEnv()) {
 			std::cout << "[Error - Monster::onCreatureMove] Call stack overflow" << std::endl;
 			return;
 		}
 
-		tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
+		lua::ScriptEnvironment* env = lua::getScriptEnv();
 		env->setScriptId(mType->info.creatureMoveEvent, scriptInterface);
 
 		lua_State* L = scriptInterface->getLuaState();
 		scriptInterface->pushFunction(mType->info.creatureMoveEvent);
 
-		tfs::lua::pushUserdata<Monster>(L, this);
-		tfs::lua::setMetatable(L, -1, "Monster");
+		lua::pushUserdata<Monster>(L, this);
+		lua::setMetatable(L, -1, "Monster");
 
-		tfs::lua::pushUserdata<Creature>(L, creature);
-		tfs::lua::setCreatureMetatable(L, -1, creature);
+		lua::pushUserdata<Creature>(L, creature);
+		lua::setCreatureMetatable(L, -1, creature);
 
-		tfs::lua::pushPosition(L, oldPos);
-		tfs::lua::pushPosition(L, newPos);
+		lua::pushPosition(L, oldPos);
+		lua::pushPosition(L, newPos);
 
 		if (scriptInterface->callFunction(4)) {
 			return;
@@ -285,30 +291,32 @@ void Monster::onCreatureMove(Creature* creature, const Tile* newTile, const Posi
 
 void Monster::onCreatureSay(Creature* creature, SpeakClasses type, const std::string& text)
 {
+	using namespace tfs;
+
 	Creature::onCreatureSay(creature, type, text);
 
 	if (mType->info.creatureSayEvent != -1) {
 		// onCreatureSay(self, creature, type, message)
 		LuaScriptInterface* scriptInterface = mType->info.scriptInterface;
-		if (!tfs::lua::reserveScriptEnv()) {
+		if (!lua::reserveScriptEnv()) {
 			std::cout << "[Error - Monster::onCreatureSay] Call stack overflow" << std::endl;
 			return;
 		}
 
-		tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
+		lua::ScriptEnvironment* env = lua::getScriptEnv();
 		env->setScriptId(mType->info.creatureSayEvent, scriptInterface);
 
 		lua_State* L = scriptInterface->getLuaState();
 		scriptInterface->pushFunction(mType->info.creatureSayEvent);
 
-		tfs::lua::pushUserdata<Monster>(L, this);
-		tfs::lua::setMetatable(L, -1, "Monster");
+		lua::pushUserdata<Monster>(L, this);
+		lua::setMetatable(L, -1, "Monster");
 
-		tfs::lua::pushUserdata<Creature>(L, creature);
-		tfs::lua::setCreatureMetatable(L, -1, creature);
+		lua::pushUserdata<Creature>(L, creature);
+		lua::setCreatureMetatable(L, -1, creature);
 
 		lua_pushnumber(L, type);
-		tfs::lua::pushString(L, text);
+		lua::pushString(L, text);
 
 		scriptInterface->callVoidFunction(4);
 	}
@@ -717,24 +725,26 @@ void Monster::onEndCondition(ConditionType_t type)
 
 void Monster::onThink(uint32_t interval)
 {
+	using namespace tfs;
+
 	Creature::onThink(interval);
 
 	if (mType->info.thinkEvent != -1) {
 		// onThink(self, interval)
 		LuaScriptInterface* scriptInterface = mType->info.scriptInterface;
-		if (!tfs::lua::reserveScriptEnv()) {
+		if (!lua::reserveScriptEnv()) {
 			std::cout << "[Error - Monster::onThink] Call stack overflow" << std::endl;
 			return;
 		}
 
-		tfs::lua::ScriptEnvironment* env = tfs::lua::getScriptEnv();
+		lua::ScriptEnvironment* env = lua::getScriptEnv();
 		env->setScriptId(mType->info.thinkEvent, scriptInterface);
 
 		lua_State* L = scriptInterface->getLuaState();
 		scriptInterface->pushFunction(mType->info.thinkEvent);
 
-		tfs::lua::pushUserdata<Monster>(L, this);
-		tfs::lua::setMetatable(L, -1, "Monster");
+		lua::pushUserdata<Monster>(L, this);
+		lua::setMetatable(L, -1, "Monster");
 
 		lua_pushnumber(L, interval);
 
