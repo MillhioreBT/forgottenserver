@@ -22,6 +22,8 @@
 
 #include <boost/range/adaptor/reversed.hpp>
 
+using namespace tfs;
+
 extern Chat* g_chat;
 extern Game* g_game;
 extern ConfigManager g_config;
@@ -45,8 +47,6 @@ bool LuaScriptInterface::reInitState()
 
 int32_t LuaScriptInterface::loadFile(const std::string& file, Npc* npc /* = nullptr*/)
 {
-	using namespace tfs;
-
 	// loads file as a chunk at stack top
 	int ret = luaL_loadfile(luaState, file.c_str());
 	if (ret != 0) {
@@ -223,8 +223,6 @@ bool LuaScriptInterface::closeState()
 
 bool LuaScriptInterface::callFunction(int params)
 {
-	using namespace tfs;
-
 	bool result = false;
 	int size = lua_gettop(luaState);
 	if (lua::protectedCall(luaState, params, 1) != 0) {
@@ -244,8 +242,6 @@ bool LuaScriptInterface::callFunction(int params)
 
 void LuaScriptInterface::callVoidFunction(int params)
 {
-	using namespace tfs;
-
 	int size = lua_gettop(luaState);
 	if (lua::protectedCall(luaState, params, 0) != 0) {
 		lua::reportError(nullptr, lua::popString(luaState));
@@ -261,8 +257,6 @@ void LuaScriptInterface::callVoidFunction(int params)
 void LuaScriptInterface::registerClass(std::string_view className, std::string_view baseClass,
                                        lua_CFunction newFunction /* = nullptr*/)
 {
-	using namespace tfs;
-
 	// className = {}
 	lua_newtable(luaState);
 	lua_pushvalue(luaState, -1);
@@ -375,8 +369,6 @@ void LuaScriptInterface::registerGlobalMethod(std::string_view functionName, lua
 
 void LuaScriptInterface::registerVariable(std::string_view tableName, std::string_view name, lua_Number value)
 {
-	using namespace tfs;
-
 	// tableName.name = value
 	lua_getglobal(luaState, tableName.data());
 	lua::setField(luaState, name.data(), value);
@@ -394,8 +386,6 @@ void LuaScriptInterface::registerGlobalVariable(std::string_view name, lua_Numbe
 
 void LuaScriptInterface::registerGlobalBoolean(std::string_view name, bool value)
 {
-	using namespace tfs;
-
 	// _G[name] = value
 	lua::pushBoolean(luaState, value);
 	lua_setglobal(luaState, name.data());
@@ -405,8 +395,6 @@ namespace {
 
 int luaDebugPrint(lua_State* L)
 {
-	using namespace tfs;
-
 	// debugPrint(text)
 	reportErrorFunc(L, lua::getString(L, -1));
 	return 0;
@@ -432,8 +420,6 @@ int luaGetWorldLight(lua_State* L)
 int luaSetWorldLight(lua_State* L)
 {
 	// setWorldLight(level, color)
-	using namespace tfs;
-
 	if (g_config.getBoolean(ConfigManager::DEFAULT_WORLD_LIGHT)) {
 		lua::pushBoolean(L, false);
 		return 1;
@@ -450,8 +436,6 @@ int luaSetWorldLight(lua_State* L)
 int luaGetWorldUpTime(lua_State* L)
 {
 	// getWorldUpTime()
-	using namespace tfs;
-
 	uint64_t uptime = (OTSYS_TIME() - ProtocolStatus::start) / 1000;
 	lua_pushnumber(L, uptime);
 	return 1;
@@ -460,8 +444,6 @@ int luaGetWorldUpTime(lua_State* L)
 int luaGetSubTypeName(lua_State* L)
 {
 	// getSubTypeName(subType)
-	using namespace tfs;
-
 	int32_t subType = lua::getNumber<int32_t>(L, 1);
 	if (subType > 0) {
 		lua::pushString(L, Item::items[subType].name);
@@ -473,8 +455,6 @@ int luaGetSubTypeName(lua_State* L)
 
 static bool getArea(lua_State* L, std::vector<uint32_t>& vec, uint32_t& rows)
 {
-	using namespace tfs;
-
 	lua_pushnil(L);
 	for (rows = 0; lua_next(L, -2) != 0; ++rows) {
 		if (!lua_istable(L, -1)) {
@@ -500,8 +480,6 @@ static bool getArea(lua_State* L, std::vector<uint32_t>& vec, uint32_t& rows)
 int luaCreateCombatArea(lua_State* L)
 {
 	// createCombatArea({area}, <optional> {extArea})
-	using namespace tfs;
-
 	lua::ScriptEnvironment* env = lua::getScriptEnv();
 	if (env->getScriptId() != EVENT_ID_LOADING) {
 		reportErrorFunc(L, "This function can only be used while loading the script.");
@@ -541,8 +519,6 @@ int luaDoAreaCombat(lua_State* L)
 {
 	// doAreaCombat(cid, type, pos, area, min, max, effect[, origin = ORIGIN_SPELL[, blockArmor = false[, blockShield =
 	// false[, ignoreResistances = false]]]])
-	using namespace tfs;
-
 	Creature* creature = lua::getCreature(L, 1);
 	if (!creature && (!lua::isNumber(L, 1) || lua::getNumber<uint32_t>(L, 1) != 0)) {
 		reportErrorFunc(L, lua::getErrorDesc(lua::LUA_ERROR_CREATURE_NOT_FOUND));
@@ -580,8 +556,6 @@ int luaDoTargetCombat(lua_State* L)
 {
 	// doTargetCombat(cid, target, type, min, max, effect[, origin = ORIGIN_SPELL[, blockArmor = false[, blockShield =
 	// false[, ignoreResistances = false]]]])
-	using namespace tfs;
-
 	Creature* creature = lua::getCreature(L, 1);
 	if (!creature && (!lua::isNumber(L, 1) || lua::getNumber<uint32_t>(L, 1) != 0)) {
 		reportErrorFunc(L, lua::getErrorDesc(lua::LUA_ERROR_CREATURE_NOT_FOUND));
@@ -618,8 +592,6 @@ int luaDoTargetCombat(lua_State* L)
 int luaDoChallengeCreature(lua_State* L)
 {
 	// doChallengeCreature(cid, target[, force = false])
-	using namespace tfs;
-
 	Creature* creature = lua::getCreature(L, 1);
 	if (!creature) {
 		reportErrorFunc(L, lua::getErrorDesc(lua::LUA_ERROR_CREATURE_NOT_FOUND));
@@ -642,8 +614,6 @@ int luaDoChallengeCreature(lua_State* L)
 int luaIsValidUID(lua_State* L)
 {
 	// isValidUID(uid)
-	using namespace tfs;
-
 	lua::pushBoolean(L, lua::getScriptEnv()->getThingByUID(lua::getNumber<uint32_t>(L, -1)) != nullptr);
 	return 1;
 }
@@ -651,8 +621,6 @@ int luaIsValidUID(lua_State* L)
 int luaIsDepot(lua_State* L)
 {
 	// isDepot(uid)
-	using namespace tfs;
-
 	Container* container = lua::getScriptEnv()->getContainerByUID(lua::getNumber<uint32_t>(L, -1));
 	lua::pushBoolean(L, container && container->getDepotLocker());
 	return 1;
@@ -662,8 +630,6 @@ int luaIsMoveable(lua_State* L)
 {
 	// isMoveable(uid)
 	// isMovable(uid)
-	using namespace tfs;
-
 	Thing* thing = lua::getScriptEnv()->getThingByUID(lua::getNumber<uint32_t>(L, -1));
 	lua::pushBoolean(L, thing && thing->isPushable());
 	return 1;
@@ -672,8 +638,6 @@ int luaIsMoveable(lua_State* L)
 int luaDoAddContainerItem(lua_State* L)
 {
 	// doAddContainerItem(uid, itemid, <optional> count/subtype)
-	using namespace tfs;
-
 	uint32_t uid = lua::getNumber<uint32_t>(L, 1);
 
 	lua::ScriptEnvironment* env = lua::getScriptEnv();
@@ -739,8 +703,6 @@ int luaDoAddContainerItem(lua_State* L)
 int luaGetDepotId(lua_State* L)
 {
 	// getDepotId(uid)
-	using namespace tfs;
-
 	uint32_t uid = lua::getNumber<uint32_t>(L, -1);
 
 	Container* container = lua::getScriptEnv()->getContainerByUID(uid);
@@ -764,8 +726,6 @@ int luaGetDepotId(lua_State* L)
 int luaAddEvent(lua_State* L)
 {
 	// addEvent(callback, delay, ...)
-	using namespace tfs;
-
 	int parameters = lua_gettop(L);
 	if (parameters < 2) {
 		reportErrorFunc(L, fmt::format("Not enough parameters: {:d}.", parameters));
@@ -886,8 +846,6 @@ int luaAddEvent(lua_State* L)
 int luaStopEvent(lua_State* L)
 {
 	// stopEvent(eventid)
-	using namespace tfs;
-
 	uint32_t eventId = lua::getNumber<uint32_t>(L, 1);
 
 	auto& timerEvents = getGlobalLuaEnvironment().timerEvents;
@@ -913,8 +871,6 @@ int luaStopEvent(lua_State* L)
 
 int luaSaveServer(lua_State* L)
 {
-	using namespace tfs;
-
 	getGlobalGame().saveGameState();
 	lua::pushBoolean(L, true);
 	return 1;
@@ -928,8 +884,6 @@ int luaCleanMap(lua_State* L)
 
 int luaIsInWar(lua_State* L)
 {
-	using namespace tfs;
-
 	// isInWar(cid, target)
 	Player* player = lua::getPlayer(L, 1);
 	if (!player) {
@@ -952,8 +906,6 @@ int luaIsInWar(lua_State* L)
 int luaGetWaypointPositionByName(lua_State* L)
 {
 	// getWaypointPositionByName(name)
-	using namespace tfs;
-
 	auto& waypoints = getGlobalGame().map.waypoints;
 
 	auto it = waypoints.find(lua::getString(L, -1));
@@ -968,8 +920,6 @@ int luaGetWaypointPositionByName(lua_State* L)
 int luaSendChannelMessage(lua_State* L)
 {
 	// sendChannelMessage(channelId, type, message)
-	using namespace tfs;
-
 	uint32_t channelId = lua::getNumber<uint32_t>(L, 1);
 	ChatChannel* channel = g_chat->getChannelById(channelId);
 	if (!channel) {
@@ -987,8 +937,6 @@ int luaSendChannelMessage(lua_State* L)
 int luaSendGuildChannelMessage(lua_State* L)
 {
 	// sendGuildChannelMessage(guildId, type, message)
-	using namespace tfs;
-
 	uint32_t guildId = lua::getNumber<uint32_t>(L, 1);
 	ChatChannel* channel = g_chat->getGuildChannelById(guildId);
 	if (!channel) {
@@ -1006,8 +954,6 @@ int luaSendGuildChannelMessage(lua_State* L)
 int luaIsScriptsInterface(lua_State* L)
 {
 	// isScriptsInterface()
-	using namespace tfs;
-
 	if (lua::getScriptEnv()->getScriptInterface() == &g_scripts->getScriptInterface()) {
 		lua::pushBoolean(L, true);
 	} else {
@@ -1021,8 +967,6 @@ int luaIsScriptsInterface(lua_State* L)
 
 int luaBitNot(lua_State* L)
 {
-	using namespace tfs;
-
 	lua_pushnumber(L, ~lua::getNumber<uint32_t>(L, -1));
 	return 1;
 }
@@ -1056,40 +1000,30 @@ SHIFTOP(RightShift, >>)
 
 int luaConfigManagerGetString(lua_State* L)
 {
-	using namespace tfs;
-
 	lua::pushString(L, g_config.getString(lua::getNumber<ConfigManager::string_config_t>(L, -1)));
 	return 1;
 }
 
 int luaConfigManagerGetNumber(lua_State* L)
 {
-	using namespace tfs;
-
 	lua_pushnumber(L, g_config.getNumber(lua::getNumber<ConfigManager::integer_config_t>(L, -1)));
 	return 1;
 }
 
 int luaConfigManagerGetBoolean(lua_State* L)
 {
-	using namespace tfs;
-
 	lua::pushBoolean(L, g_config.getBoolean(lua::getNumber<ConfigManager::boolean_config_t>(L, -1)));
 	return 1;
 }
 
 int luaDatabaseExecute(lua_State* L)
 {
-	using namespace tfs;
-
 	lua::pushBoolean(L, Database::getInstance().executeQuery(lua::getString(L, -1)));
 	return 1;
 }
 
 int luaDatabaseAsyncExecute(lua_State* L)
 {
-	using namespace tfs;
-
 	std::function<void(DBResult_ptr, bool)> callback;
 	if (lua_gettop(L) > 1) {
 		int32_t ref = luaL_ref(L, LUA_REGISTRYINDEX);
@@ -1120,8 +1054,6 @@ int luaDatabaseAsyncExecute(lua_State* L)
 
 int luaDatabaseStoreQuery(lua_State* L)
 {
-	using namespace tfs;
-
 	if (DBResult_ptr res = Database::getInstance().storeQuery(lua::getString(L, -1))) {
 		lua_pushnumber(L, lua::ScriptEnvironment::addResult(res));
 	} else {
@@ -1132,8 +1064,6 @@ int luaDatabaseStoreQuery(lua_State* L)
 
 int luaDatabaseAsyncStoreQuery(lua_State* L)
 {
-	using namespace tfs;
-
 	std::function<void(DBResult_ptr, bool)> callback;
 	if (lua_gettop(L) > 1) {
 		int32_t ref = luaL_ref(L, LUA_REGISTRYINDEX);
@@ -1168,16 +1098,12 @@ int luaDatabaseAsyncStoreQuery(lua_State* L)
 
 int luaDatabaseEscapeString(lua_State* L)
 {
-	using namespace tfs;
-
 	lua::pushString(L, Database::getInstance().escapeString(lua::getString(L, -1)));
 	return 1;
 }
 
 int luaDatabaseEscapeBlob(lua_State* L)
 {
-	using namespace tfs;
-
 	uint32_t length = lua::getNumber<uint32_t>(L, 2);
 	lua::pushString(L, Database::getInstance().escapeBlob(lua::getString(L, 1).c_str(), length));
 	return 1;
@@ -1185,24 +1111,18 @@ int luaDatabaseEscapeBlob(lua_State* L)
 
 int luaDatabaseLastInsertId(lua_State* L)
 {
-	using namespace tfs;
-
 	lua_pushnumber(L, Database::getInstance().getLastInsertId());
 	return 1;
 }
 
 int luaDatabaseTableExists(lua_State* L)
 {
-	using namespace tfs;
-
 	lua::pushBoolean(L, DatabaseManager::tableExists(lua::getString(L, -1)));
 	return 1;
 }
 
 int luaResultGetNumber(lua_State* L)
 {
-	using namespace tfs;
-
 	DBResult_ptr res = lua::ScriptEnvironment::getResultByID(lua::getNumber<uint32_t>(L, 1));
 	if (!res) {
 		lua::pushBoolean(L, false);
@@ -1216,8 +1136,6 @@ int luaResultGetNumber(lua_State* L)
 
 int luaResultGetString(lua_State* L)
 {
-	using namespace tfs;
-
 	DBResult_ptr res = lua::ScriptEnvironment::getResultByID(lua::getNumber<uint32_t>(L, 1));
 	if (!res) {
 		lua::pushBoolean(L, false);
@@ -1231,8 +1149,6 @@ int luaResultGetString(lua_State* L)
 
 int luaResultGetStream(lua_State* L)
 {
-	using namespace tfs;
-
 	DBResult_ptr res = lua::ScriptEnvironment::getResultByID(lua::getNumber<uint32_t>(L, 1));
 	if (!res) {
 		lua::pushBoolean(L, false);
@@ -1248,8 +1164,6 @@ int luaResultGetStream(lua_State* L)
 
 int luaResultNext(lua_State* L)
 {
-	using namespace tfs;
-
 	DBResult_ptr res = lua::ScriptEnvironment::getResultByID(lua::getNumber<uint32_t>(L, -1));
 	if (!res) {
 		lua::pushBoolean(L, false);
@@ -1262,8 +1176,6 @@ int luaResultNext(lua_State* L)
 
 int luaResultFree(lua_State* L)
 {
-	using namespace tfs;
-
 	lua::pushBoolean(L, lua::ScriptEnvironment::removeResult(lua::getNumber<uint32_t>(L, -1)));
 	return 1;
 }
@@ -1310,8 +1222,6 @@ const luaL_Reg LuaScriptInterface::luaResultTable[] = {
 
 void LuaScriptInterface::registerFunctions()
 {
-	using namespace tfs;
-
 	// isValidUID(uid)
 	lua_register(luaState, "isValidUID", luaIsValidUID);
 
@@ -1558,8 +1468,6 @@ void LuaEnvironment::clearAreaObjects(LuaScriptInterface* interface)
 
 void LuaEnvironment::executeTimerEvent(uint32_t eventIndex)
 {
-	using namespace tfs;
-
 	auto it = timerEvents.find(eventIndex);
 	if (it == timerEvents.end()) {
 		return;

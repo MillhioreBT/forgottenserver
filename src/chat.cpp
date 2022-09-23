@@ -11,6 +11,8 @@
 #include "pugicast.h"
 #include "scheduler.h"
 
+using namespace tfs;
+
 extern Chat* g_chat;
 extern Game* g_game;
 
@@ -138,8 +140,6 @@ bool ChatChannel::talk(const Player& fromPlayer, SpeakClasses type, const std::s
 bool ChatChannel::executeCanJoinEvent(const Player& player)
 {
 	// canJoin(player)
-	using namespace tfs;
-
 	if (canJoinEvent == -1) {
 		return true;
 	}
@@ -165,8 +165,6 @@ bool ChatChannel::executeCanJoinEvent(const Player& player)
 bool ChatChannel::executeOnJoinEvent(const Player& player)
 {
 	// onJoin(player)
-	using namespace tfs;
-
 	if (onJoinEvent == -1) {
 		return true;
 	}
@@ -192,8 +190,6 @@ bool ChatChannel::executeOnJoinEvent(const Player& player)
 bool ChatChannel::executeOnLeaveEvent(const Player& player)
 {
 	// onLeave(player)
-	using namespace tfs;
-
 	if (onLeaveEvent == -1) {
 		return true;
 	}
@@ -219,8 +215,6 @@ bool ChatChannel::executeOnLeaveEvent(const Player& player)
 bool ChatChannel::executeOnSpeakEvent(const Player& player, SpeakClasses& type, const std::string& message)
 {
 	// onSpeak(player, type, message)
-	using namespace tfs;
-
 	if (onSpeakEvent == -1) {
 		return true;
 	}

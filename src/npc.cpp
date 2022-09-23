@@ -13,6 +13,8 @@
 #include "pugicast.h"
 #include "spectators.h"
 
+using namespace tfs;
+
 extern Game* g_game;
 extern LuaEnvironment* g_luaEnvironment;
 
@@ -619,7 +621,6 @@ void NpcScriptInterface::registerFunctions()
 int NpcScriptInterface::luaActionSay(lua_State* L)
 {
 	// selfSay(words[, target])
-	using namespace tfs;
 
 	Npc* npc = lua::getScriptEnv()->getNpc();
 	if (!npc) {
@@ -642,8 +643,6 @@ int NpcScriptInterface::luaActionSay(lua_State* L)
 int NpcScriptInterface::luaActionMove(lua_State* L)
 {
 	// selfMove(direction)
-	using namespace tfs;
-
 	Npc* npc = lua::getScriptEnv()->getNpc();
 	if (npc) {
 		getGlobalGame().internalMoveCreature(npc, lua::getNumber<Direction>(L, 1));
@@ -656,8 +655,6 @@ int NpcScriptInterface::luaActionMoveTo(lua_State* L)
 	// selfMoveTo(x, y, z[, minTargetDist = 1[, maxTargetDist = 1[, fullPathSearch = true[, clearSight = true[,
 	// maxSearchDist = 0]]]]]) selfMoveTo(position[, minTargetDist = 1[, maxTargetDist = 1[, fullPathSearch = true[,
 	// clearSight = true[, maxSearchDist = 0]]]]])
-	using namespace tfs;
-
 	Npc* npc = lua::getScriptEnv()->getNpc();
 	if (!npc) {
 		return 0;
@@ -684,8 +681,6 @@ int NpcScriptInterface::luaActionMoveTo(lua_State* L)
 int NpcScriptInterface::luaActionTurn(lua_State* L)
 {
 	// selfTurn(direction)
-	using namespace tfs;
-
 	Npc* npc = lua::getScriptEnv()->getNpc();
 	if (npc) {
 		getGlobalGame().internalCreatureTurn(npc, lua::getNumber<Direction>(L, 1));
@@ -696,8 +691,6 @@ int NpcScriptInterface::luaActionTurn(lua_State* L)
 int NpcScriptInterface::luaActionFollow(lua_State* L)
 {
 	// selfFollow(player)
-	using namespace tfs;
-
 	Npc* npc = lua::getScriptEnv()->getNpc();
 	if (!npc) {
 		lua::pushBoolean(L, false);
@@ -711,8 +704,6 @@ int NpcScriptInterface::luaActionFollow(lua_State* L)
 int NpcScriptInterface::luagetDistanceTo(lua_State* L)
 {
 	// getDistanceTo(uid)
-	using namespace tfs;
-
 	lua::ScriptEnvironment* env = lua::getScriptEnv();
 
 	Npc* npc = env->getNpc();
@@ -746,8 +737,6 @@ int NpcScriptInterface::luagetDistanceTo(lua_State* L)
 int NpcScriptInterface::luaSetNpcFocus(lua_State* L)
 {
 	// doNpcSetCreatureFocus(cid)
-	using namespace tfs;
-
 	Npc* npc = lua::getScriptEnv()->getNpc();
 	if (npc) {
 		npc->setCreatureFocus(lua::getCreature(L, -1));
@@ -758,8 +747,6 @@ int NpcScriptInterface::luaSetNpcFocus(lua_State* L)
 int NpcScriptInterface::luaGetNpcCid(lua_State* L)
 {
 	// getNpcCid()
-	using namespace tfs;
-
 	Npc* npc = lua::getScriptEnv()->getNpc();
 	if (npc) {
 		lua_pushnumber(L, npc->getID());
@@ -772,8 +759,6 @@ int NpcScriptInterface::luaGetNpcCid(lua_State* L)
 int NpcScriptInterface::luaGetNpcParameter(lua_State* L)
 {
 	// getNpcParameter(paramKey)
-	using namespace tfs;
-
 	Npc* npc = lua::getScriptEnv()->getNpc();
 	if (!npc) {
 		lua_pushnil(L);
@@ -794,8 +779,6 @@ int NpcScriptInterface::luaGetNpcParameter(lua_State* L)
 int NpcScriptInterface::luaOpenShopWindow(lua_State* L)
 {
 	// openShopWindow(cid, items, onBuy callback, onSell callback)
-	using namespace tfs;
-
 	int32_t sellCallback;
 	if (lua_isfunction(L, -1) == 0) {
 		sellCallback = -1;
@@ -868,8 +851,6 @@ int NpcScriptInterface::luaOpenShopWindow(lua_State* L)
 int NpcScriptInterface::luaCloseShopWindow(lua_State* L)
 {
 	// closeShopWindow(cid)
-	using namespace tfs;
-
 	Npc* npc = lua::getScriptEnv()->getNpc();
 	if (!npc) {
 		reportErrorFunc(L, lua::getErrorDesc(lua::LUA_ERROR_CREATURE_NOT_FOUND));
@@ -912,8 +893,6 @@ int NpcScriptInterface::luaCloseShopWindow(lua_State* L)
 int NpcScriptInterface::luaDoSellItem(lua_State* L)
 {
 	// doSellItem(cid, itemid, amount, <optional> subtype, <optional> actionid, <optional: default: 1> canDropOnMap)
-	using namespace tfs;
-
 	Player* player = lua::getPlayer(L, 1);
 	if (!player) {
 		reportErrorFunc(L, lua::getErrorDesc(lua::LUA_ERROR_PLAYER_NOT_FOUND));
@@ -979,8 +958,6 @@ int NpcScriptInterface::luaDoSellItem(lua_State* L)
 int NpcScriptInterface::luaNpcGetParameter(lua_State* L)
 {
 	// npc:getParameter(key)
-	using namespace tfs;
-
 	const std::string& key = lua::getString(L, 2);
 	Npc* npc = lua::getUserdata<Npc>(L, 1);
 	if (npc) {
@@ -999,8 +976,6 @@ int NpcScriptInterface::luaNpcGetParameter(lua_State* L)
 int NpcScriptInterface::luaNpcSetFocus(lua_State* L)
 {
 	// npc:setFocus(creature)
-	using namespace tfs;
-
 	Creature* creature = lua::getCreature(L, 2);
 	Npc* npc = lua::getUserdata<Npc>(L, 1);
 	if (npc) {
@@ -1015,8 +990,6 @@ int NpcScriptInterface::luaNpcSetFocus(lua_State* L)
 int NpcScriptInterface::luaNpcOpenShopWindow(lua_State* L)
 {
 	// npc:openShopWindow(cid, items, buyCallback, sellCallback)
-	using namespace tfs;
-
 	if (!lua_istable(L, 3)) {
 		reportErrorFunc(L, "item list is not a table.");
 		lua::pushBoolean(L, false);
@@ -1083,8 +1056,6 @@ int NpcScriptInterface::luaNpcOpenShopWindow(lua_State* L)
 int NpcScriptInterface::luaNpcCloseShopWindow(lua_State* L)
 {
 	// npc:closeShopWindow(player)
-	using namespace tfs;
-
 	Player* player = lua::getPlayer(L, 2);
 	if (!player) {
 		reportErrorFunc(L, lua::getErrorDesc(lua::LUA_ERROR_PLAYER_NOT_FOUND));
@@ -1143,8 +1114,6 @@ bool NpcEventsHandler::isLoaded() const { return loaded; }
 
 void NpcEventsHandler::onCreatureAppear(Creature* creature)
 {
-	using namespace tfs;
-
 	if (creatureAppearEvent == -1) {
 		return;
 	}
@@ -1168,8 +1137,6 @@ void NpcEventsHandler::onCreatureAppear(Creature* creature)
 
 void NpcEventsHandler::onCreatureDisappear(Creature* creature)
 {
-	using namespace tfs;
-
 	if (creatureDisappearEvent == -1) {
 		return;
 	}
@@ -1193,8 +1160,6 @@ void NpcEventsHandler::onCreatureDisappear(Creature* creature)
 
 void NpcEventsHandler::onCreatureMove(Creature* creature, const Position& oldPos, const Position& newPos)
 {
-	using namespace tfs;
-
 	if (creatureMoveEvent == -1) {
 		return;
 	}
@@ -1220,8 +1185,6 @@ void NpcEventsHandler::onCreatureMove(Creature* creature, const Position& oldPos
 
 void NpcEventsHandler::onCreatureSay(Creature* creature, SpeakClasses type, const std::string& text)
 {
-	using namespace tfs;
-
 	if (creatureSayEvent == -1) {
 		return;
 	}
@@ -1248,8 +1211,6 @@ void NpcEventsHandler::onCreatureSay(Creature* creature, SpeakClasses type, cons
 void NpcEventsHandler::onPlayerTrade(Player* player, int32_t callback, uint16_t itemId, uint8_t count, uint8_t amount,
                                      bool ignore, bool inBackpacks)
 {
-	using namespace tfs;
-
 	if (callback == -1) {
 		return;
 	}
@@ -1278,8 +1239,6 @@ void NpcEventsHandler::onPlayerTrade(Player* player, int32_t callback, uint16_t 
 
 void NpcEventsHandler::onPlayerCloseChannel(Player* player)
 {
-	using namespace tfs;
-
 	if (playerCloseChannelEvent == -1) {
 		return;
 	}
@@ -1303,8 +1262,6 @@ void NpcEventsHandler::onPlayerCloseChannel(Player* player)
 
 void NpcEventsHandler::onPlayerEndTrade(Player* player)
 {
-	using namespace tfs;
-
 	if (playerEndTradeEvent == -1) {
 		return;
 	}
@@ -1328,8 +1285,6 @@ void NpcEventsHandler::onPlayerEndTrade(Player* player)
 
 void NpcEventsHandler::onThink()
 {
-	using namespace tfs;
-
 	if (thinkEvent == -1) {
 		return;
 	}

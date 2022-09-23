@@ -10,6 +10,8 @@
 #include "luameta.h"
 #include "player.h"
 
+using namespace tfs;
+
 Events::Events() : scriptInterface("Event Interface") { scriptInterface.initState(); }
 
 bool Events::load()
@@ -132,8 +134,6 @@ bool Events::load()
 bool Events::eventMonsterOnSpawn(Monster* monster, const Position& position, bool startup, bool artificial)
 {
 	// Monster:onSpawn(position, startup, artificial)
-	using namespace tfs;
-
 	if (info.monsterOnSpawn == -1) {
 		return true;
 	}
@@ -162,8 +162,6 @@ bool Events::eventMonsterOnSpawn(Monster* monster, const Position& position, boo
 bool Events::eventCreatureOnChangeOutfit(Creature* creature, const Outfit_t& outfit)
 {
 	// Creature:onChangeOutfit(outfit) or Creature.onChangeOutfit(self, outfit)
-	using namespace tfs;
-
 	if (info.creatureOnChangeOutfit == -1) {
 		return true;
 	}
@@ -190,8 +188,6 @@ bool Events::eventCreatureOnChangeOutfit(Creature* creature, const Outfit_t& out
 ReturnValue Events::eventCreatureOnAreaCombat(Creature* creature, Tile* tile, bool aggressive)
 {
 	// Creature:onAreaCombat(tile, aggressive) or Creature.onAreaCombat(self, tile, aggressive)
-	using namespace tfs;
-
 	if (info.creatureOnAreaCombat == -1) {
 		return RETURNVALUE_NOERROR;
 	}
@@ -235,8 +231,6 @@ ReturnValue Events::eventCreatureOnAreaCombat(Creature* creature, Tile* tile, bo
 ReturnValue Events::eventCreatureOnTargetCombat(Creature* creature, Creature* target)
 {
 	// Creature:onTargetCombat(target) or Creature.onTargetCombat(self, target)
-	using namespace tfs;
-
 	if (info.creatureOnTargetCombat == -1) {
 		return RETURNVALUE_NOERROR;
 	}
@@ -278,8 +272,6 @@ ReturnValue Events::eventCreatureOnTargetCombat(Creature* creature, Creature* ta
 void Events::eventCreatureOnHear(Creature* creature, Creature* speaker, const std::string& words, SpeakClasses type)
 {
 	// Creature:onHear(speaker, words, type)
-	using namespace tfs;
-
 	if (info.creatureOnHear == -1) {
 		return;
 	}
@@ -311,8 +303,6 @@ void Events::eventCreatureOnHear(Creature* creature, Creature* speaker, const st
 bool Events::eventPartyOnJoin(Party* party, Player* player)
 {
 	// Party:onJoin(player) or Party.onJoin(self, player)
-	using namespace tfs;
-
 	if (info.partyOnJoin == -1) {
 		return true;
 	}
@@ -340,8 +330,6 @@ bool Events::eventPartyOnJoin(Party* party, Player* player)
 bool Events::eventPartyOnLeave(Party* party, Player* player)
 {
 	// Party:onLeave(player) or Party.onLeave(self, player)
-	using namespace tfs;
-
 	if (info.partyOnLeave == -1) {
 		return true;
 	}
@@ -369,8 +357,6 @@ bool Events::eventPartyOnLeave(Party* party, Player* player)
 bool Events::eventPartyOnDisband(Party* party)
 {
 	// Party:onDisband() or Party.onDisband(self)
-	using namespace tfs;
-
 	if (info.partyOnDisband == -1) {
 		return true;
 	}
@@ -395,8 +381,6 @@ bool Events::eventPartyOnDisband(Party* party)
 void Events::eventPartyOnShareExperience(Party* party, uint64_t& exp)
 {
 	// Party:onShareExperience(exp) or Party.onShareExperience(self, exp)
-	using namespace tfs;
-
 	if (info.partyOnShareExperience == -1) {
 		return;
 	}
@@ -431,8 +415,6 @@ void Events::eventPartyOnShareExperience(Party* party, uint64_t& exp)
 bool Events::eventPlayerOnBrowseField(Player* player, const Position& position)
 {
 	// Player:onBrowseField(position) or Player.onBrowseField(self, position)
-	using namespace tfs;
-
 	if (info.playerOnBrowseField == -1) {
 		return true;
 	}
@@ -460,8 +442,6 @@ void Events::eventPlayerOnLook(Player* player, const Position& position, Thing* 
                                int32_t lookDistance)
 {
 	// Player:onLook(thing, position, distance) or Player.onLook(self, thing, position, distance)
-	using namespace tfs;
-
 	if (info.playerOnLook == -1) {
 		return;
 	}
@@ -500,8 +480,6 @@ void Events::eventPlayerOnLookInBattleList(Player* player, Creature* creature, i
 {
 	// Player:onLookInBattleList(creature, position, distance) or Player.onLookInBattleList(self, creature, position,
 	// distance)
-	using namespace tfs;
-
 	if (info.playerOnLookInBattleList == -1) {
 		return;
 	}
@@ -531,8 +509,6 @@ void Events::eventPlayerOnLookInBattleList(Player* player, Creature* creature, i
 void Events::eventPlayerOnLookInTrade(Player* player, Player* partner, Item* item, int32_t lookDistance)
 {
 	// Player:onLookInTrade(partner, item, distance) or Player.onLookInTrade(self, partner, item, distance)
-	using namespace tfs;
-
 	if (info.playerOnLookInTrade == -1) {
 		return;
 	}
@@ -565,8 +541,6 @@ void Events::eventPlayerOnLookInTrade(Player* player, Player* partner, Item* ite
 bool Events::eventPlayerOnLookInShop(Player* player, const ItemType* itemType, uint8_t count)
 {
 	// Player:onLookInShop(itemType, count) or Player.onLookInShop(self, itemType, count)
-	using namespace tfs;
-
 	if (info.playerOnLookInShop == -1) {
 		return true;
 	}
@@ -596,8 +570,6 @@ bool Events::eventPlayerOnLookInShop(Player* player, const ItemType* itemType, u
 bool Events::eventPlayerOnLookInMarket(Player* player, const ItemType* itemType)
 {
 	// Player:onLookInMarket(itemType) or Player.onLookInMarket(self, itemType)
-	using namespace tfs;
-
 	if (info.playerOnLookInMarket == -1) {
 		return true;
 	}
@@ -627,8 +599,6 @@ ReturnValue Events::eventPlayerOnMoveItem(Player* player, Item* item, uint16_t c
 {
 	// Player:onMoveItem(item, count, fromPosition, toPosition) or Player.onMoveItem(self, item, count, fromPosition,
 	// toPosition, fromCylinder, toCylinder)
-	using namespace tfs;
-
 	if (info.playerOnMoveItem == -1) {
 		return RETURNVALUE_NOERROR;
 	}
@@ -675,8 +645,6 @@ void Events::eventPlayerOnItemMoved(Player* player, Item* item, uint16_t count, 
 {
 	// Player:onItemMoved(item, count, fromPosition, toPosition) or Player.onItemMoved(self, item, count, fromPosition,
 	// toPosition, fromCylinder, toCylinder)
-	using namespace tfs;
-
 	if (info.playerOnItemMoved == -1) {
 		return;
 	}
@@ -713,8 +681,6 @@ bool Events::eventPlayerOnMoveCreature(Player* player, Creature* creature, const
 {
 	// Player:onMoveCreature(creature, fromPosition, toPosition) or Player.onMoveCreature(self, creature, fromPosition,
 	// toPosition)
-	using namespace tfs;
-
 	if (info.playerOnMoveCreature == -1) {
 		return true;
 	}
@@ -747,8 +713,6 @@ void Events::eventPlayerOnReportRuleViolation(Player* player, const std::string&
                                               const std::string& translation)
 {
 	// Player:onReportRuleViolation(targetName, reportType, reportReason, comment, translation)
-	using namespace tfs;
-
 	if (info.playerOnReportRuleViolation == -1) {
 		return;
 	}
@@ -782,8 +746,6 @@ bool Events::eventPlayerOnReportBug(Player* player, const std::string& message, 
                                     uint8_t category)
 {
 	// Player:onReportBug(message, position, category)
-	using namespace tfs;
-
 	if (info.playerOnReportBug == -1) {
 		return true;
 	}
@@ -812,8 +774,6 @@ bool Events::eventPlayerOnReportBug(Player* player, const std::string& message, 
 bool Events::eventPlayerOnTurn(Player* player, Direction direction)
 {
 	// Player:onTurn(direction) or Player.onTurn(self, direction)
-	using namespace tfs;
-
 	if (info.playerOnTurn == -1) {
 		return true;
 	}
@@ -840,8 +800,6 @@ bool Events::eventPlayerOnTurn(Player* player, Direction direction)
 bool Events::eventPlayerOnTradeRequest(Player* player, Player* target, Item* item)
 {
 	// Player:onTradeRequest(target, item)
-	using namespace tfs;
-
 	if (info.playerOnTradeRequest == -1) {
 		return true;
 	}
@@ -872,8 +830,6 @@ bool Events::eventPlayerOnTradeRequest(Player* player, Player* target, Item* ite
 bool Events::eventPlayerOnTradeAccept(Player* player, Player* target, Item* item, Item* targetItem)
 {
 	// Player:onTradeAccept(target, item, targetItem)
-	using namespace tfs;
-
 	if (info.playerOnTradeAccept == -1) {
 		return true;
 	}
@@ -907,8 +863,6 @@ bool Events::eventPlayerOnTradeAccept(Player* player, Player* target, Item* item
 void Events::eventPlayerOnTradeCompleted(Player* player, Player* target, Item* item, Item* targetItem, bool isSuccess)
 {
 	// Player:onTradeCompleted(target, item, targetItem, isSuccess)
-	using namespace tfs;
-
 	if (info.playerOnTradeCompleted == -1) {
 		return;
 	}
@@ -944,8 +898,6 @@ void Events::eventPlayerOnTradeCompleted(Player* player, Player* target, Item* i
 void Events::eventPlayerOnPodiumRequest(Player* player, Item* item)
 {
 	// Player:onPodiumRequest(item) or Player.onPodiumRequest(self, item)
-	using namespace tfs;
-
 	if (info.playerOnPodiumRequest == -1) {
 		return;
 	}
@@ -975,8 +927,6 @@ void Events::eventPlayerOnPodiumEdit(Player* player, Item* item, const Outfit_t&
 {
 	// Player:onPodiumEdit(item, outfit, direction, isVisible) or Player.onPodiumEdit(self, item, outfit, direction,
 	// isVisible)
-	using namespace tfs;
-
 	if (info.playerOnPodiumEdit == -1) {
 		return;
 	}
@@ -1009,8 +959,6 @@ void Events::eventPlayerOnPodiumEdit(Player* player, Item* item, const Outfit_t&
 void Events::eventPlayerOnGainExperience(Player* player, Creature* source, uint64_t& exp, uint64_t rawExp)
 {
 	// Player:onGainExperience(source, exp, rawExp) rawExp gives the original exp which is not multiplied
-	using namespace tfs;
-
 	if (info.playerOnGainExperience == -1) {
 		return;
 	}
@@ -1052,8 +1000,6 @@ void Events::eventPlayerOnGainExperience(Player* player, Creature* source, uint6
 void Events::eventPlayerOnLoseExperience(Player* player, uint64_t& exp)
 {
 	// Player:onLoseExperience(exp)
-	using namespace tfs;
-
 	if (info.playerOnLoseExperience == -1) {
 		return;
 	}
@@ -1087,8 +1033,6 @@ void Events::eventPlayerOnLoseExperience(Player* player, uint64_t& exp)
 void Events::eventPlayerOnGainSkillTries(Player* player, skills_t skill, uint64_t& tries)
 {
 	// Player:onGainSkillTries(skill, tries)
-	using namespace tfs;
-
 	if (info.playerOnGainSkillTries == -1) {
 		return;
 	}
@@ -1123,8 +1067,6 @@ void Events::eventPlayerOnGainSkillTries(Player* player, skills_t skill, uint64_
 void Events::eventPlayerOnWrapItem(Player* player, Item* item)
 {
 	// Player:onWrapItem(item)
-	using namespace tfs;
-
 	if (info.playerOnWrapItem == -1) {
 		return;
 	}
@@ -1152,8 +1094,6 @@ void Events::eventPlayerOnWrapItem(Player* player, Item* item)
 void Events::eventPlayerOnInventoryUpdate(Player* player, Item* item, slots_t slot, bool equip)
 {
 	// Player:onInventoryUpdate(item, slot, equip)
-	using namespace tfs;
-
 	if (info.playerOnInventoryUpdate == -1) {
 		return;
 	}
@@ -1184,8 +1124,6 @@ void Events::eventPlayerOnInventoryUpdate(Player* player, Item* item, slots_t sl
 void Events::eventMonsterOnDropLoot(Monster* monster, Container* corpse)
 {
 	// Monster:onDropLoot(corpse)
-	using namespace tfs;
-
 	if (info.monsterOnDropLoot == -1) {
 		return;
 	}

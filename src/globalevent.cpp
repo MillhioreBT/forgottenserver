@@ -11,6 +11,8 @@
 #include "scheduler.h"
 #include "tools.h"
 
+using namespace tfs;
+
 extern ConfigManager g_config;
 
 GlobalEvents::GlobalEvents() : scriptInterface("GlobalEvent Interface") { scriptInterface.initState(); }
@@ -325,8 +327,6 @@ std::string GlobalEvent::getScriptEventName() const
 bool GlobalEvent::executeRecord(uint32_t current, uint32_t old)
 {
 	// onRecord(current, old)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - GlobalEvent::executeRecord] Call stack overflow" << std::endl;
 		return false;
@@ -345,8 +345,6 @@ bool GlobalEvent::executeRecord(uint32_t current, uint32_t old)
 
 bool GlobalEvent::executeEvent() const
 {
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - GlobalEvent::executeEvent] Call stack overflow" << std::endl;
 		return false;

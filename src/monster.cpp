@@ -14,6 +14,8 @@
 #include "spectators.h"
 #include "spells.h"
 
+using namespace tfs;
+
 extern Game* g_game;
 extern Monsters g_monsters;
 extern Events* g_events;
@@ -120,8 +122,6 @@ void Monster::onAttackedCreatureDisappear(bool) { attackTicks = 0; }
 
 void Monster::onCreatureAppear(Creature* creature, bool isLogin)
 {
-	using namespace tfs;
-
 	Creature::onCreatureAppear(creature, isLogin);
 
 	if (mType->info.creatureAppearEvent != -1) {
@@ -164,8 +164,6 @@ void Monster::onCreatureAppear(Creature* creature, bool isLogin)
 
 void Monster::onRemoveCreature(Creature* creature, bool isLogout)
 {
-	using namespace tfs;
-
 	Creature::onRemoveCreature(creature, isLogout);
 
 	if (mType->info.creatureDisappearEvent != -1) {
@@ -207,8 +205,6 @@ void Monster::onRemoveCreature(Creature* creature, bool isLogout)
 void Monster::onCreatureMove(Creature* creature, const Tile* newTile, const Position& newPos, const Tile* oldTile,
                              const Position& oldPos, bool teleport)
 {
-	using namespace tfs;
-
 	Creature::onCreatureMove(creature, newTile, newPos, oldTile, oldPos, teleport);
 
 	if (mType->info.creatureMoveEvent != -1) {
@@ -291,8 +287,6 @@ void Monster::onCreatureMove(Creature* creature, const Tile* newTile, const Posi
 
 void Monster::onCreatureSay(Creature* creature, SpeakClasses type, const std::string& text)
 {
-	using namespace tfs;
-
 	Creature::onCreatureSay(creature, type, text);
 
 	if (mType->info.creatureSayEvent != -1) {
@@ -725,8 +719,6 @@ void Monster::onEndCondition(ConditionType_t type)
 
 void Monster::onThink(uint32_t interval)
 {
-	using namespace tfs;
-
 	Creature::onThink(interval);
 
 	if (mType->info.thinkEvent != -1) {

@@ -12,6 +12,8 @@
 #include "luameta.h"
 #include "pugicast.h"
 
+using namespace tfs;
+
 extern Game* g_game;
 extern Vocations g_vocations;
 
@@ -676,8 +678,6 @@ bool MoveEvent::configureEvent(const pugi::xml_node& node)
 
 uint32_t MoveEvent::StepInField(Creature* creature, Item* item, const Position&)
 {
-	using namespace tfs;
-
 	MagicField* field = item->getMagicField();
 	if (field) {
 		field->onStepInField(creature);
@@ -691,8 +691,6 @@ uint32_t MoveEvent::StepOutField(Creature*, Item*, const Position&) { return 1; 
 
 uint32_t MoveEvent::AddItemField(Item* item, Item*, const Position&)
 {
-	using namespace tfs;
-
 	if (MagicField* field = item->getMagicField()) {
 		Tile* tile = item->getTile();
 		if (CreatureVector* creatures = tile->getCreatures()) {
@@ -979,8 +977,6 @@ bool MoveEvent::executeStep(Creature* creature, Item* item, const Position& pos)
 {
 	// onStepIn(creature, item, pos, fromPosition)
 	// onStepOut(creature, item, pos, fromPosition)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - MoveEvent::executeStep] Call stack overflow" << std::endl;
 		return false;
@@ -1017,8 +1013,6 @@ bool MoveEvent::executeEquip(Player* player, Item* item, slots_t slot, bool isCh
 {
 	// onEquip(player, item, slot, isCheck)
 	// onDeEquip(player, item, slot, isCheck)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - MoveEvent::executeEquip] Call stack overflow" << std::endl;
 		return false;
@@ -1051,8 +1045,6 @@ bool MoveEvent::executeAddRemItem(Item* item, Item* tileItem, const Position& po
 {
 	// onaddItem(moveitem, tileitem, pos)
 	// onRemoveItem(moveitem, tileitem, pos)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - MoveEvent::executeAddRemItem] Call stack overflow" << std::endl;
 		return false;

@@ -14,6 +14,8 @@
 #include "monsters.h"
 #include "pugicast.h"
 
+using namespace tfs;
+
 extern Game* g_game;
 extern Spells* g_spells;
 extern Monsters g_monsters;
@@ -329,8 +331,6 @@ bool CombatSpell::castSpell(Creature* creature, Creature* target)
 bool CombatSpell::executeCastSpell(Creature* creature, const LuaVariant& var)
 {
 	// onCastSpell(creature, var)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - CombatSpell::executeCastSpell] Call stack overflow" << std::endl;
 		return false;
@@ -1026,8 +1026,6 @@ bool InstantSpell::internalCastSpell(Creature* creature, const LuaVariant& var)
 bool InstantSpell::executeCastSpell(Creature* creature, const LuaVariant& var)
 {
 	// onCastSpell(creature, var)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - InstantSpell::executeCastSpell] Call stack overflow" << std::endl;
 		return false;
@@ -1210,8 +1208,6 @@ bool RuneSpell::internalCastSpell(Creature* creature, const LuaVariant& var, boo
 bool RuneSpell::executeCastSpell(Creature* creature, const LuaVariant& var, bool isHotkey)
 {
 	// onCastSpell(creature, var, isHotkey)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - RuneSpell::executeCastSpell] Call stack overflow" << std::endl;
 		return false;

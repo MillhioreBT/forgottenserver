@@ -13,6 +13,8 @@
 #include "spectators.h"
 #include "weapons.h"
 
+using namespace tfs;
+
 extern Game* g_game;
 extern Weapons* g_weapons;
 extern ConfigManager g_config;
@@ -1110,8 +1112,6 @@ void Combat::doAreaCombat(Creature* caster, const Position& position, const Area
 void ValueCallback::getMinMaxValues(Player* player, CombatDamage& damage) const
 {
 	// onGetPlayerMinMaxValues(...)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - ValueCallback::getMinMaxValues] Call stack overflow" << std::endl;
 		return;
@@ -1194,8 +1194,6 @@ void ValueCallback::getMinMaxValues(Player* player, CombatDamage& damage) const
 void TileCallback::onTileCombat(Creature* creature, Tile* tile) const
 {
 	// onTileCombat(creature, pos)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - TileCallback::onTileCombat] Call stack overflow" << std::endl;
 		return;
@@ -1226,8 +1224,6 @@ void TileCallback::onTileCombat(Creature* creature, Tile* tile) const
 void TargetCallback::onTargetCombat(Creature* creature, Creature* target) const
 {
 	// onTargetCombat(creature, target)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - TargetCallback::onTargetCombat] Call stack overflow" << std::endl;
 		return;

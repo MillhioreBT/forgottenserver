@@ -10,6 +10,8 @@
 #include "luameta.h"
 #include "tools.h"
 
+using namespace tfs;
+
 CreatureEvents::CreatureEvents() : scriptInterface("CreatureScript Interface") { scriptInterface.initState(); }
 
 void CreatureEvents::clear(bool fromLua)
@@ -264,8 +266,6 @@ void CreatureEvent::clearEvent()
 bool CreatureEvent::executeOnLogin(Player* player) const
 {
 	// onLogin(player)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeOnLogin] Call stack overflow" << std::endl;
 		return false;
@@ -285,8 +285,6 @@ bool CreatureEvent::executeOnLogin(Player* player) const
 bool CreatureEvent::executeOnLogout(Player* player) const
 {
 	// onLogout(player)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeOnLogout] Call stack overflow" << std::endl;
 		return false;
@@ -306,8 +304,6 @@ bool CreatureEvent::executeOnLogout(Player* player) const
 bool CreatureEvent::executeOnThink(Creature* creature, uint32_t interval)
 {
 	// onThink(creature, interval)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeOnThink] Call stack overflow" << std::endl;
 		return false;
@@ -329,8 +325,6 @@ bool CreatureEvent::executeOnThink(Creature* creature, uint32_t interval)
 bool CreatureEvent::executeOnPrepareDeath(Creature* creature, Creature* killer)
 {
 	// onPrepareDeath(creature, killer)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeOnPrepareDeath] Call stack overflow" << std::endl;
 		return false;
@@ -360,8 +354,6 @@ bool CreatureEvent::executeOnDeath(Creature* creature, Item* corpse, Creature* k
                                    bool lastHitUnjustified, bool mostDamageUnjustified)
 {
 	// onDeath(creature, corpse, killer, mostDamageKiller, lastHitUnjustified, mostDamageUnjustified)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeOnDeath] Call stack overflow" << std::endl;
 		return false;
@@ -401,8 +393,6 @@ bool CreatureEvent::executeOnDeath(Creature* creature, Item* corpse, Creature* k
 bool CreatureEvent::executeAdvance(Player* player, skills_t skill, uint32_t oldLevel, uint32_t newLevel)
 {
 	// onAdvance(player, skill, oldLevel, newLevel)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeAdvance] Call stack overflow" << std::endl;
 		return false;
@@ -426,8 +416,6 @@ bool CreatureEvent::executeAdvance(Player* player, skills_t skill, uint32_t oldL
 void CreatureEvent::executeOnKill(Creature* creature, Creature* target)
 {
 	// onKill(creature, target)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeOnKill] Call stack overflow" << std::endl;
 		return;
@@ -449,8 +437,6 @@ void CreatureEvent::executeOnKill(Creature* creature, Creature* target)
 void CreatureEvent::executeModalWindow(Player* player, uint32_t modalWindowId, uint8_t buttonId, uint8_t choiceId)
 {
 	// onModalWindow(player, modalWindowId, buttonId, choiceId)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeModalWindow] Call stack overflow" << std::endl;
 		return;
@@ -475,8 +461,6 @@ void CreatureEvent::executeModalWindow(Player* player, uint32_t modalWindowId, u
 bool CreatureEvent::executeTextEdit(Player* player, Item* item, const std::string& text)
 {
 	// onTextEdit(player, item, text)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeTextEdit] Call stack overflow" << std::endl;
 		return false;
@@ -500,8 +484,6 @@ bool CreatureEvent::executeTextEdit(Player* player, Item* item, const std::strin
 void CreatureEvent::executeHealthChange(Creature* creature, Creature* attacker, CombatDamage& damage)
 {
 	// onHealthChange(creature, attacker, primaryDamage, primaryType, secondaryDamage, secondaryType, origin)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeHealthChange] Call stack overflow" << std::endl;
 		return;
@@ -545,8 +527,6 @@ void CreatureEvent::executeHealthChange(Creature* creature, Creature* attacker, 
 void CreatureEvent::executeManaChange(Creature* creature, Creature* attacker, CombatDamage& damage)
 {
 	// onManaChange(creature, attacker, primaryDamage, primaryType, secondaryDamage, secondaryType, origin)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeManaChange] Call stack overflow" << std::endl;
 		return;
@@ -585,8 +565,6 @@ void CreatureEvent::executeManaChange(Creature* creature, Creature* attacker, Co
 void CreatureEvent::executeExtendedOpcode(Player* player, uint8_t opcode, const std::string& buffer)
 {
 	// onExtendedOpcode(player, opcode, buffer)
-	using namespace tfs;
-
 	if (!lua::reserveScriptEnv()) {
 		std::cout << "[Error - CreatureEvent::executeExtendedOpcode] Call stack overflow" << std::endl;
 		return;
