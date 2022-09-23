@@ -19,8 +19,7 @@ Container::Container(uint16_t type) : Container(type, items[type].maxItems) {}
 
 Container::Container(uint16_t type, uint16_t size, bool unlocked /*= true*/, bool pagination /*= false*/) :
     Item(type), maxSize(size), unlocked(unlocked), pagination(pagination)
-{
-}
+{}
 
 Container::Container(Tile* tile) : Container(ITEM_BROWSEFIELD, 30, false, true)
 {

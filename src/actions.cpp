@@ -491,8 +491,7 @@ bool Actions::useItemEx(Player* player, const Position& fromPos, const Position&
 
 Action::Action(LuaScriptInterface* interface) :
     Event(interface), function(nullptr), allowFarUse(false), checkFloor(true), checkLineOfSight(true)
-{
-}
+{}
 
 bool Action::configureEvent(const pugi::xml_node& node)
 {

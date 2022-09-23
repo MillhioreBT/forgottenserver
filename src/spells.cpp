@@ -263,8 +263,7 @@ Position Spells::getCasterPosition(Creature* creature, Direction dir)
 
 CombatSpell::CombatSpell(Combat_ptr combat, bool needTarget, bool needDirection) :
     Event(&g_spells->getScriptInterface()), combat(combat), needDirection(needDirection), needTarget(needTarget)
-{
-}
+{}
 
 bool CombatSpell::loadScriptCombat()
 {
