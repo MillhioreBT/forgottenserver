@@ -23,7 +23,7 @@ function handler.onReceive(player)
     end
 
     msg:sendToPlayer(player)
-    msg:delete()
+    return msg:delete()
 end
 
 handler:register()
