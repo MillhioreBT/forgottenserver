@@ -18,7 +18,15 @@ jobs:
 
       - uses: leafo/gh-actions-lua@v8.0.0
         with:
-           luaVersion: "5.3.5"
+          luaVersion: "5.3.5"
 
       - name: Test Lua syntax
-        run: find data/ -name '*.lua' -print0 | xargs -0 -n1 luac -p
+        run: |
+          find data/ -name '*.lua' -print0 | xargs -0 -n1 luac -p
+          |
+          # Check for tabs instead of spaces in indentation
+          |
+          if grep -r -n -P "\t[ ]+" data/; then
+            echo "ERROR: Tabs should be used for indentation instead of spaces"
+            exit 1
+          fi
