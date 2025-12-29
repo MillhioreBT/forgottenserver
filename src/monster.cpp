@@ -108,9 +108,21 @@ bool Monster::canWalkOnFieldType(CombatType_t combatType) const
 
 void Monster::onAttackedCreatureDisappear(bool) { attackTicks = 0; }
 
-void Monster::onCreatureAppear(Creature* creature, bool isLogin)
+void Monster::onCreatureAppear(Creature* creature, bool, MagicEffectClasses)
 {
-	Creature::onCreatureAppear(creature, isLogin);
+	if (creature == this) {
+		setLastPosition(getPosition());
+
+		// We just spawned lets look around to see who is there.
+		if (isSummon()) {
+			isMasterInRange = canSee(getMaster()->getPosition());
+		}
+
+		updateTargetList();
+		updateIdleStatus();
+	} else {
+		onCreatureEnter(creature);
+	}
 
 	if (mType->info.creatureAppearEvent != -1) {
 		// onCreatureAppear(self, creature)
@@ -135,18 +147,6 @@ void Monster::onCreatureAppear(Creature* creature, bool isLogin)
 		if (scriptInterface->callFunction(2)) {
 			return;
 		}
-	}
-
-	if (creature == this) {
-		// We just spawned lets look around to see who is there.
-		if (isSummon()) {
-			isMasterInRange = canSee(getMaster()->getPosition());
-		}
-
-		updateTargetList();
-		updateIdleStatus();
-	} else {
-		onCreatureEnter(creature);
 	}
 }
 
@@ -1085,17 +1085,7 @@ bool Monster::walkToSpawn()
 	return true;
 }
 
-void Monster::onWalk()
-{
-	Creature::onWalk();
-
-	if ((attackedCreature || followCreature) && isFleeing()) {
-		if (lastPathUpdate < OTSYS_TIME()) {
-			g_dispatcher.addTask(createTask([id = getID()]() { g_game.updateCreatureWalk(id); }));
-			lastPathUpdate = OTSYS_TIME() + getNumber(ConfigManager::PATHFINDING_DELAY);
-		}
-	}
-}
+void Monster::onWalk() { Creature::onWalk(); }
 
 void Monster::onWalkComplete()
 {

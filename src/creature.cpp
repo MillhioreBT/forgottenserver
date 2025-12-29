@@ -328,15 +328,6 @@ void Creature::updateIcons() const
 	}
 }
 
-void Creature::onCreatureAppear(Creature* creature, bool isLogin)
-{
-	if (creature == this) {
-		if (isLogin) {
-			setLastPosition(getPosition());
-		}
-	}
-}
-
 void Creature::onRemoveCreature(Creature* creature, bool) { onCreatureDisappear(creature, true); }
 
 void Creature::onCreatureDisappear(const Creature* creature, bool isLogout)
@@ -740,6 +731,7 @@ void Creature::setAttackedCreature(Creature* creature)
 	creature->addFollower(this);
 	onAttackedCreature(attackedCreature);
 	attackedCreature->onAttacked();
+	forceUpdatePath();
 
 	for (Creature* summon : summons) {
 		summon->setAttackedCreature(creature);
@@ -788,6 +780,7 @@ void Creature::setFollowCreature(Creature* creature)
 	creature->addFollower(this);
 	hasFollowPath = false;
 	onFollowCreature(creature);
+	forceUpdatePath();
 }
 
 void Creature::removeFollowCreature()
